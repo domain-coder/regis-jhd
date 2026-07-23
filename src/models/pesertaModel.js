@@ -4,6 +4,7 @@ const { normalizePhone } = require('../services/phone');
 
 class DuplikatError extends Error {}
 class SesiPenuhError extends Error {}
+class SesiBentrokError extends Error {}
 
 function findByToken(token) {
   return db.prepare('SELECT * FROM peserta WHERE qr_token = ?').get(token);
@@ -42,10 +43,11 @@ const _registerTx = db.transaction((eventId, data) => {
     throw new DuplikatError('Nomor HP ini sudah terdaftar pada event ini.');
   }
 
+  const sesiTerpilih = [];
   for (const sesiId of data.sesi_ids) {
     const sesi = db
       .prepare(
-        `SELECT sesi.id, sesi.nama, ruangan.kapasitas,
+        `SELECT sesi.id, sesi.nama, sesi.waktu_mulai, sesi.waktu_selesai, ruangan.kapasitas,
                 (SELECT COUNT(*) FROM peserta_sesi WHERE sesi_id = sesi.id) AS jumlah_daftar
          FROM sesi JOIN ruangan ON ruangan.id = sesi.ruangan_id
          WHERE sesi.id = ?`
@@ -56,6 +58,17 @@ const _registerTx = db.transaction((eventId, data) => {
     }
     if (sesi.jumlah_daftar >= sesi.kapasitas) {
       throw new SesiPenuhError(`Sesi "${sesi.nama}" sudah penuh.`);
+    }
+    sesiTerpilih.push(sesi);
+  }
+
+  for (let i = 0; i < sesiTerpilih.length; i += 1) {
+    for (let j = i + 1; j < sesiTerpilih.length; j += 1) {
+      const a = sesiTerpilih[i];
+      const b = sesiTerpilih[j];
+      if (a.waktu_mulai < b.waktu_selesai && b.waktu_mulai < a.waktu_selesai) {
+        throw new SesiBentrokError(`Sesi "${a.nama}" dan "${b.nama}" waktunya bentrok.`);
+      }
     }
   }
 
@@ -136,6 +149,7 @@ function updateStatusKirim(id, status, keterangan) {
 module.exports = {
   DuplikatError,
   SesiPenuhError,
+  SesiBentrokError,
   findByToken,
   findById,
   isTerdaftarDiSesi,

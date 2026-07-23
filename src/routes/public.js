@@ -7,6 +7,20 @@ const { generateQrDataUrl } = require('../services/qr');
 
 const router = express.Router();
 
+const BULAN = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+function formatTanggal(iso) {
+  const [y, m, d] = iso.split('T')[0].split('-').map(Number);
+  return `${d} ${BULAN[m - 1]} ${y}`;
+}
+
+function formatJam(iso) {
+  return (iso.split('T')[1] || '').slice(0, 5);
+}
+
 function sesiPublikList() {
   const event = eventModel.getActive();
   return sesiModel.listByEvent(event.id).map((s) => ({
@@ -15,6 +29,8 @@ function sesiPublikList() {
     ruangan_nama: s.ruangan_nama,
     waktu_mulai: s.waktu_mulai,
     waktu_selesai: s.waktu_selesai,
+    tanggal_label: formatTanggal(s.waktu_mulai),
+    jam_label: `${formatJam(s.waktu_mulai)}–${formatJam(s.waktu_selesai)} WIB`,
     kapasitas: s.kapasitas,
     jumlah_daftar: s.jumlah_daftar,
     sisa: sesiModel.sisaKuota(s),
@@ -62,7 +78,11 @@ router.post('/api/public/register', (req, res) => {
     });
     res.redirect(`/register/konfirmasi/${peserta.qr_token}`);
   } catch (err) {
-    if (err instanceof pesertaModel.DuplikatError || err instanceof pesertaModel.SesiPenuhError) {
+    if (
+      err instanceof pesertaModel.DuplikatError ||
+      err instanceof pesertaModel.SesiPenuhError ||
+      err instanceof pesertaModel.SesiBentrokError
+    ) {
       return res.status(400).render('public/register', {
         title: 'Registrasi',
         sesiList: sesiPublikList(),

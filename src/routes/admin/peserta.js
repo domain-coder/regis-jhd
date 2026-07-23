@@ -75,7 +75,11 @@ router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) =>
     });
     res.redirect('/admin/peserta');
   } catch (err) {
-    if (err instanceof pesertaModel.DuplikatError || err instanceof pesertaModel.SesiPenuhError) {
+    if (
+      err instanceof pesertaModel.DuplikatError ||
+      err instanceof pesertaModel.SesiPenuhError ||
+      err instanceof pesertaModel.SesiBentrokError
+    ) {
       return res.status(400).render('admin/peserta/tambah', {
         title: 'Tambah Peserta',
         sesiList: sesiModel.listByEvent(event.id),
