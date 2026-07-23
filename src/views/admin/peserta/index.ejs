@@ -51,6 +51,7 @@
             <span class="badge <%= badgeClass %>"><%= p.status_kirim_qr %></span>
           </td>
           <td class="text-nowrap">
+            <a href="/admin/peserta/<%= p.id %>/qr" class="btn btn-sm btn-outline-success">QR</a>
             <a href="/admin/peserta/<%= p.id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
             <form method="post" action="/admin/peserta/<%= p.id %>/resend-qr" class="d-inline">
               <button class="btn btn-sm btn-outline-warning" type="submit">Kirim Ulang</button>

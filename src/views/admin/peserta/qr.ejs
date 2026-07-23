@@ -1,0 +1,36 @@
+<%- include('../../partials/head', { title: title }) %>
+<%- include('../../partials/navbar', { user }) %>
+<div class="container text-center" style="max-width: 480px;">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h4 class="mb-1"><%= peserta.nama %></h4>
+      <p class="text-muted mb-3"><%= peserta.no_hp %></p>
+      <img src="<%= qrDataUrl %>" alt="QR Code" class="img-fluid mb-3" style="max-width: 280px;">
+
+      <% const badgeClass = { pending: 'bg-secondary', sent: 'bg-success', failed: 'bg-danger' }[peserta.status_kirim_qr] || 'bg-secondary'; %>
+      <p>Status kirim WA: <span class="badge <%= badgeClass %>"><%= peserta.status_kirim_qr %></span></p>
+
+      <hr>
+      <h6 class="text-start">Sesi yang diikuti:</h6>
+      <ul class="list-group list-group-flush text-start mb-3">
+        <% sesiList.forEach(s => { %>
+          <li class="list-group-item">
+            <strong><%= s.nama %></strong> — <%= s.ruangan_nama %><br>
+            <small class="text-muted"><%= s.waktu_mulai %> s/d <%= s.waktu_selesai %></small>
+          </li>
+        <% }) %>
+      </ul>
+
+      <div class="d-flex gap-2 no-print">
+        <button class="btn btn-outline-primary flex-fill" onclick="window.print()">Cetak</button>
+        <a href="/admin/peserta" class="btn btn-outline-secondary flex-fill">Kembali</a>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  @media print {
+    .navbar, .no-print { display: none !important; }
+  }
+</style>
+<%- include('../../partials/foot') %>

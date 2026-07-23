@@ -8,6 +8,7 @@ const eventModel = require('../../models/eventModel');
 const sesiModel = require('../../models/sesiModel');
 const pesertaModel = require('../../models/pesertaModel');
 const { labelSesi } = require('../../services/tanggal');
+const { generateQrDataUrl } = require('../../services/qr');
 const { requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -124,6 +125,14 @@ router.get('/peserta/export', requireRole('super_admin', 'admin_event'), (req, r
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="peserta-jhd26.csv"');
   res.send(csv);
+});
+
+router.get('/peserta/:id/qr', requireRole('super_admin', 'admin_event'), async (req, res) => {
+  const peserta = pesertaModel.findById(req.params.id);
+  if (!peserta) return res.status(404).render('errors/404', { title: 'Tidak Ditemukan' });
+  const sesiList = pesertaModel.sesiUntukPeserta(peserta.id);
+  const qrDataUrl = await generateQrDataUrl(peserta.qr_token);
+  res.render('admin/peserta/qr', { title: 'QR Peserta', peserta, sesiList, qrDataUrl });
 });
 
 router.get('/peserta/:id/edit', requireRole('super_admin', 'admin_event'), (req, res) => {
