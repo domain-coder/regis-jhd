@@ -11,6 +11,7 @@ Lihat `master-prompt.txt` dan PRD terkait untuk detail requirement lengkap.
 - EJS (server-rendered) + vanilla JS pada halaman scan
 - `qrcode` untuk generate QR, `html5-qrcode` (via CDN) untuk scan dari browser HP
 - Session-based auth (`express-session`, in-memory store) + `bcrypt`
+- PWA installable (web app manifest + service worker ringan) — lihat bagian PWA di bawah
 
 ## Instalasi
 
@@ -74,6 +75,25 @@ ganti password akun default, atau buat akun super_admin baru dan nonaktifkan yan
 rm -f data/jhd26.sqlite data/jhd26.sqlite-wal data/jhd26.sqlite-shm
 npm run migrate && npm run seed
 ```
+
+## PWA (Installable ke Home Screen)
+
+Aplikasi ini mendukung "Add to Home Screen" di HP (Android/iOS) lewat web app
+manifest (`src/public/manifest.webmanifest`) dan service worker ringan
+(`src/public/sw.js`). Ini **bukan** PWA offline-first — service worker hanya
+meng-cache asset statis (CSS, ikon), semua halaman/form/API tetap butuh koneksi
+internet aktif (sesuai asumsi PRD Bagian 4.2).
+
+**Penting — butuh HTTPS:** browser (Chrome/Safari) hanya mengizinkan registrasi
+service worker & prompt instalasi di atas HTTPS, kecuali di `localhost`. Selama
+testing lewat IP LAN biasa (`http://192.168.x.x:3000`), tombol "Install app"
+tidak akan muncul di HP — ini normal, bukan bug. Agar benar-benar installable
+dari HP peserta/panitia, deploy dulu di belakang Nginx + TLS (mis. via
+`certbot`), lihat `deploy/nginx.conf.example`.
+
+Ikon aplikasi ada di `src/public/icons/` (di-generate dari `icon.svg` /
+`icon-maskable.svg` via ImageMagick — edit SVG lalu render ulang jika ingin
+mengganti branding: `convert -background none icon.svg -resize 512x512 icon-512.png`).
 
 ## Alur Utama
 
