@@ -28,6 +28,15 @@
         <label class="form-label">Pilih Sesi (boleh lebih dari satu, selama waktunya tidak bentrok)</label>
         <%- include('../partials/sesi-picker', { sesiList }) %>
 
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="consent" id="consent" required>
+          <label class="form-check-label small" for="consent">
+            Saya menyetujui data pribadi (nama, nomor HP/WA, email, institusi) yang saya berikan
+            digunakan untuk keperluan registrasi, pengiriman QR code, dan absensi event Jagongan
+            Hak Digital 2026, sesuai UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
+          </label>
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">Daftar</button>
       </form>
       </div>

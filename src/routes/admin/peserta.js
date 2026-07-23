@@ -62,6 +62,11 @@ const manualSchema = z.object({
     .preprocess((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]), z.array(z.string()))
     .refine((arr) => arr.length > 0, 'Pilih minimal satu sesi')
     .transform((arr) => arr.map(Number)),
+  consent: z
+    .string()
+    .optional()
+    .transform((v) => v === 'on')
+    .refine((v) => v, 'Konfirmasi persetujuan data pribadi peserta wajib dicentang.'),
 });
 
 router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) => {
@@ -82,13 +87,15 @@ router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) =>
       email: parsed.data.email,
       institusi: parsed.data.institusi,
       sesi_ids: parsed.data.sesi_id,
+      consent: parsed.data.consent,
     });
     res.redirect('/admin/peserta');
   } catch (err) {
     if (
       err instanceof pesertaModel.DuplikatError ||
       err instanceof pesertaModel.SesiPenuhError ||
-      err instanceof pesertaModel.SesiBentrokError
+      err instanceof pesertaModel.SesiBentrokError ||
+      err instanceof pesertaModel.ConsentError
     ) {
       return res.status(400).render('admin/peserta/tambah', {
         title: 'Tambah Peserta',
@@ -155,7 +162,7 @@ router.post(
   upload.single('file'),
   (req, res) => {
     const event = currentEvent();
-    if (!req.file) {
+    if (!req.file || req.body.consent !== 'on') {
       return res.status(400).render('admin/peserta/index', {
         title: 'Peserta',
         pesertaList: pesertaModel
@@ -163,7 +170,9 @@ router.post(
           .map((p) => ({ ...p, sesiList: pesertaModel.sesiUntukPeserta(p.id) })),
         sesiList: sesiModel.listByEvent(event.id),
         filter: { sesi_id: '', q: '' },
-        error: 'File CSV wajib diupload.',
+        error: !req.file
+          ? 'File CSV wajib diupload.'
+          : 'Konfirmasi persetujuan data pribadi untuk seluruh peserta di file ini wajib dicentang.',
         info: null,
       });
     }
@@ -207,6 +216,7 @@ router.post(
           email: row.email,
           institusi: row.institusi,
           sesi_ids: sesiIds,
+          consent: true,
         });
         hasil.berhasil += 1;
       } catch (err) {

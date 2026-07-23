@@ -29,9 +29,19 @@
     <div class="card-body">
       <h6>Impor Peserta (CSV)</h6>
       <p class="text-muted small mb-2">Kolom: nama, no_hp, email, institusi, sesi (nama sesi dipisah koma jika lebih dari satu).</p>
-      <form method="post" action="/admin/peserta/import" enctype="multipart/form-data" class="d-flex gap-2">
-        <input type="file" name="file" accept=".csv" class="form-control" required>
-        <button type="submit" class="btn btn-secondary text-nowrap">Impor</button>
+      <form method="post" action="/admin/peserta/import" enctype="multipart/form-data">
+        <div class="d-flex gap-2 mb-2">
+          <input type="file" name="file" accept=".csv" class="form-control" required>
+          <button type="submit" class="btn btn-secondary text-nowrap">Impor</button>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="consent" id="consent-import" required>
+          <label class="form-check-label small" for="consent-import">
+            Saya menyatakan seluruh peserta pada file ini telah menyetujui data pribadinya
+            digunakan untuk keperluan registrasi & absensi event, sesuai UU No. 27 Tahun 2022
+            tentang Pelindungan Data Pribadi.
+          </label>
+        </div>
       </form>
     </div>
   </div>

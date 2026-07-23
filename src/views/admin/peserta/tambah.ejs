@@ -23,6 +23,15 @@
     <label class="form-label">Sesi (boleh lebih dari satu, selama waktunya tidak bentrok)</label>
     <%- include('../../partials/sesi-picker', { sesiList }) %>
 
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" name="consent" id="consent" required>
+      <label class="form-check-label small" for="consent">
+        Peserta ini telah menyetujui data pribadinya (nama, no. HP/WA, email, institusi)
+        digunakan untuk keperluan registrasi, pengiriman QR code, dan absensi event, sesuai
+        UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
+      </label>
+    </div>
+
     <button type="submit" class="btn btn-primary">Simpan</button>
     <a href="/admin/peserta" class="btn btn-link">Batal</a>
   </form>

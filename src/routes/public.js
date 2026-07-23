@@ -40,6 +40,11 @@ const registerSchema = z.object({
     .preprocess((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]), z.array(z.string()))
     .refine((arr) => arr.length > 0, 'Pilih minimal satu sesi')
     .transform((arr) => arr.map(Number)),
+  consent: z
+    .string()
+    .optional()
+    .transform((v) => v === 'on')
+    .refine((v) => v, 'Anda harus menyetujui persetujuan pemrosesan data pribadi untuk mendaftar.'),
 });
 
 router.post('/api/public/register', (req, res) => {
@@ -61,13 +66,15 @@ router.post('/api/public/register', (req, res) => {
       email: parsed.data.email,
       institusi: parsed.data.institusi,
       sesi_ids: parsed.data.sesi_id,
+      consent: parsed.data.consent,
     });
     res.redirect(`/register/konfirmasi/${peserta.qr_token}`);
   } catch (err) {
     if (
       err instanceof pesertaModel.DuplikatError ||
       err instanceof pesertaModel.SesiPenuhError ||
-      err instanceof pesertaModel.SesiBentrokError
+      err instanceof pesertaModel.SesiBentrokError ||
+      err instanceof pesertaModel.ConsentError
     ) {
       return res.status(400).render('public/register', {
         title: 'Registrasi',

@@ -5,6 +5,7 @@ const { normalizePhone } = require('../services/phone');
 class DuplikatError extends Error {}
 class SesiPenuhError extends Error {}
 class SesiBentrokError extends Error {}
+class ConsentError extends Error {}
 
 function findByToken(token) {
   return db.prepare('SELECT * FROM peserta WHERE qr_token = ?').get(token);
@@ -34,6 +35,10 @@ function sesiUntukPeserta(pesertaId) {
 }
 
 const _registerTx = db.transaction((eventId, data) => {
+  if (!data.consent) {
+    throw new ConsentError('Persetujuan pemrosesan data pribadi wajib dicentang.');
+  }
+
   const noHp = normalizePhone(data.no_hp);
 
   const dup = db
@@ -75,8 +80,8 @@ const _registerTx = db.transaction((eventId, data) => {
   const qrToken = crypto.randomUUID();
   const result = db
     .prepare(
-      `INSERT INTO peserta (event_id, nama, no_hp, email, institusi, qr_token)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO peserta (event_id, nama, no_hp, email, institusi, qr_token, consent_at)
+       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
     )
     .run(eventId, data.nama, noHp, data.email || null, data.institusi || null, qrToken);
 
@@ -150,6 +155,7 @@ module.exports = {
   DuplikatError,
   SesiPenuhError,
   SesiBentrokError,
+  ConsentError,
   findByToken,
   findById,
   isTerdaftarDiSesi,
