@@ -1,0 +1,85 @@
+# Changelog
+
+Catatan aktivitas pengembangan & operasional sistem JHD26 Registrasi & Absensi.
+Untuk detail per-commit, lihat `git log`.
+
+## 2026-07-23 — Build awal
+
+- Implementasi awal lengkap sesuai `master-prompt.txt`: auth & role
+  (super_admin/admin_event/petugas), CRUD event/ruangan/sesi/peserta/user,
+  registrasi publik dengan validasi kapasitas real-time, generate QR
+  on-the-fly, endpoint Hermes (`/api/hermes/queue`, `/api/hermes/callback`),
+  absensi scan QR + manual walk-in, laporan rekap + export CSV.
+- PWA installable (web app manifest + service worker ringan, cache asset
+  statis saja — bukan offline-first).
+- Fix: pesan error generik "Invalid input" saat tidak ada sesi dicentang
+  saat registrasi → diganti pesan yang jelas.
+- Fix: akses kamera di halaman scan gagal diam-diam kalau browser
+  menganggap koneksi tidak aman (bukan HTTPS/localhost) — sekarang ada
+  pesan error yang jelas.
+
+## 2026-07-23 — Rebrand & UX registrasi
+
+- Rebrand penuh sesuai brand guide JHD26: palet warna, font
+  Bella/Mouldy Cheese (self-hosted, lisensi khusus JHD26) + Montserrat/Inter,
+  logo & maskot dino di navbar/halaman publik, ikon PWA.
+- Validasi bentrok waktu antar-sesi (server-side, dipakai bersama oleh
+  registrasi publik & tambah peserta manual admin) + UI daftar sesi
+  scrollable dikelompokkan per tanggal/jam, dengan sesi bentrok otomatis
+  ter-disable saat sesi lain dipilih.
+- Form registrasi didesain ulang: card rounded, maskot dino mengapit form
+  di layar lebar (disembunyikan di mobile).
+- Fix: session cookie (`secure: true`) tidak ter-set saat aplikasi diakses
+  lewat reverse proxy/tunnel (Cloudflare Tunnel) karena Express tidak tahu
+  request asli HTTPS → ditambahkan `app.set('trust proxy', 1)`.
+- Fix: kamera scan tidak reliable pilih kamera belakang lewat
+  `facingMode: 'environment'` di semua device → diganti dropdown pilih
+  kamera eksplisit (`Html5Qrcode.getCameras()`), auto-default ke kamera
+  yang labelnya mengandung "back"/"belakang"/"rear".
+- Halaman admin baru: lihat & cetak QR peserta langsung dari
+  `/admin/peserta` (berguna kalau ada kendala pengiriman WA di lapangan).
+
+## 2026-07-23/24 — Kepatuhan data & keamanan
+
+- Consent wajib: checkbox persetujuan pemrosesan data pribadi (rujukan
+  UU No. 27/2022 PDP) di registrasi publik, tambah manual admin, dan
+  impor CSV — dicatat dengan timestamp (`consent_at`), registrasi ditolak
+  kalau tidak dicentang.
+- Cloudflare Turnstile dipasang di form registrasi publik **dan** halaman
+  login panitia, diverifikasi ke Cloudflare `siteverify` API di
+  server-side (bukan cuma cek client-side).
+- `scripts/toggle-turnstile.sh on|off` — cara aman menonaktifkan Turnstile
+  sementara (utk testing lewat curl/skrip) tanpa menyentuh site/secret key
+  asli di `.env`.
+
+## Operasional server (perubahan langsung di server, di luar git)
+
+- Node.js LTS via `nvm`, dependency native (`better-sqlite3`, `bcrypt`)
+  di-build dengan `build-essential`.
+- Aplikasi dipindah dari proses background manual ke **PM2**, didaftarkan
+  sebagai systemd service (`pm2 startup` + `pm2 save`) — otomatis nyala
+  lagi saat server reboot.
+- **Cloudflare Tunnel** (`cloudflared`, systemd service `enabled`) untuk
+  HTTPS + akses publik ke `registrasi.jhd26.online`, tanpa perlu buka
+  port apa pun di firewall (port 3000 ditutup dari akses luar, hanya bisa
+  diakses via tunnel atau localhost).
+- **Backup database otomatis**: `scripts/backup.js` (pakai backup API
+  `better-sqlite3`, aman meski DB sedang aktif ditulis/WAL mode),
+  dijadwalkan tiap jam via cron, retensi 48 file (~2 hari), disimpan di
+  `/opt/jhd/backups/`.
+- Kapasitas ruangan disesuaikan dari asumsi awal PRD (R1=35/R2=30/R3=25)
+  ke denah asli venue: **R1=30, R2=20, R3=20, R4=20, R5=20** (5 ruangan).
+- Akun test dibuat: 1 super_admin (`admin`, dari seed awal), 1 admin_event
+  (`admin_event1`), 3 petugas/operator (`operator1`, `operator2`,
+  `operator3`) — kredensial dikirim terpisah, tidak dicatat di sini.
+- Data uji coba (peserta & registrasi dummy) dibersihkan sebelum staging
+  test dengan data sungguhan.
+
+## Belum diputuskan / masih perlu tindak lanjut
+
+- Flow setelah halaman konfirmasi registrasi (tombol atau auto-redirect
+  ke situs utama `jhd26.online`) — masih pending, lihat memory proyek.
+- Review final sesi & penempatan ruangan (15 sesi demo saat ini punya
+  judul asli dari jadwal event, tapi penempatan ruangan diacak untuk
+  testing, belum tentu sesuai rencana asli per-sesi).
+- Rotasi kredensial test sebelum hari-H kalau akan dipakai orang banyak.
