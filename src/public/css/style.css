@@ -1,5 +1,129 @@
+/* ==== JHD26 Brand: font-face (self-hosted, lihat README soal lisensi Bella) ==== */
+@font-face {
+  font-family: 'Bella Pro';
+  src: url('/fonts/Bella%20Pro.woff2') format('woff2'),
+       url('/fonts/Bella%20Pro.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Mouldy Cheese';
+  src: url('/fonts/MouldyCheese-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==== JHD26 Brand: color palette ==== */
+:root {
+  --jhd-yellow: #FCD532;
+  --jhd-red: #FF4E58;
+  --jhd-blue: #14A8FE;
+  --jhd-pink: #FC9BDE;
+  --jhd-green: #35CE7C;
+  --jhd-dark: #231F20;
+
+  --jhd-font-title: 'Bella Pro', 'Mouldy Cheese', 'Montserrat', sans-serif;
+  --jhd-font-heading: 'Montserrat', sans-serif;
+  --jhd-font-body: 'Inter', sans-serif;
+}
+
 body {
-  background-color: #f8f9fa;
+  background-color: #fffdf5;
+  font-family: var(--jhd-font-body);
+}
+
+h1, h2, h3,
+.navbar-brand,
+.brand-title {
+  font-family: var(--jhd-font-title);
+  letter-spacing: 0.02em;
+}
+
+h4, h5, h6,
+.card-header,
+.section-heading {
+  font-family: var(--jhd-font-heading);
+  font-weight: 700;
+}
+
+/* ==== Bootstrap component retint ke palet JHD26 ==== */
+.navbar.bg-dark {
+  background-color: var(--jhd-dark) !important;
+  border-bottom: 4px solid var(--jhd-yellow);
+}
+
+a { color: var(--jhd-blue); }
+a:hover { color: #0d8fdc; }
+
+.btn-primary {
+  --bs-btn-bg: var(--jhd-blue);
+  --bs-btn-border-color: var(--jhd-blue);
+  --bs-btn-hover-bg: #0d8fdc;
+  --bs-btn-hover-border-color: #0d8fdc;
+  --bs-btn-active-bg: #0d8fdc;
+  --bs-btn-active-border-color: #0d8fdc;
+  --bs-btn-disabled-bg: var(--jhd-blue);
+  --bs-btn-disabled-border-color: var(--jhd-blue);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--jhd-blue);
+  --bs-btn-border-color: var(--jhd-blue);
+  --bs-btn-hover-bg: var(--jhd-blue);
+  --bs-btn-hover-border-color: var(--jhd-blue);
+  --bs-btn-active-bg: var(--jhd-blue);
+  --bs-btn-active-border-color: var(--jhd-blue);
+}
+
+.badge.bg-success, .btn-outline-success, .alert-success {
+  --bs-success: var(--jhd-green);
+  --bs-success-rgb: 53, 206, 124;
+}
+.badge.bg-success { background-color: var(--jhd-green) !important; }
+
+.badge.bg-danger, .alert-danger {
+  --bs-danger: var(--jhd-red);
+  --bs-danger-rgb: 255, 78, 88;
+}
+.badge.bg-danger { background-color: var(--jhd-red) !important; }
+
+.badge.bg-warning {
+  background-color: var(--jhd-yellow) !important;
+  color: var(--jhd-dark) !important;
+}
+
+.text-success { color: var(--jhd-green) !important; }
+.text-danger { color: var(--jhd-red) !important; }
+.text-primary { color: var(--jhd-blue) !important; }
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--jhd-blue);
+  box-shadow: 0 0 0 0.25rem rgba(20, 168, 254, 0.25);
+}
+
+/* Bentuk lebih rounded/playful khusus di kartu publik (registrasi/login/konfirmasi) —
+   sengaja tidak diterapkan global agar tabel admin yang padat tetap ringkas. */
+.jhd-card .form-control,
+.jhd-card .form-select,
+.jhd-card .btn {
+  border-radius: 0.9rem;
+}
+
+.jhd-card .form-control,
+.jhd-card .form-select {
+  padding: 0.6rem 0.95rem;
+}
+
+/* ==== Elemen umum ==== */
+.brand-logo {
+  height: 48px;
+}
+
+.brand-mascot {
+  max-width: 120px;
 }
 
 #qr-reader {
@@ -16,6 +140,78 @@ body {
   text-align: center;
 }
 
-.scan-result.sukses { background-color: #d1e7dd; color: #0f5132; }
-.scan-result.gagal { background-color: #f8d7da; color: #842029; }
-.scan-result.tidak-terdaftar { background-color: #fff3cd; color: #664d03; }
+.scan-result.sukses { background-color: #d6f5e3; color: #1a7a45; }
+.scan-result.gagal { background-color: #ffe1e3; color: #a3232c; }
+.scan-result.tidak-terdaftar { background-color: #fff3cf; color: #7a5c00; }
+
+/* ==== Daftar sesi registrasi: scrollable, dikelompokkan per tanggal/jam ==== */
+.sesi-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+}
+
+.sesi-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--jhd-dark);
+  color: #fff;
+  font-family: var(--jhd-font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+}
+
+label[data-sesi-id] input[type=checkbox]:disabled ~ span {
+  opacity: 0.6;
+}
+
+/* ==== Kartu publik (registrasi/login/konfirmasi): lebih rounded & lembut ==== */
+.jhd-card {
+  border: none;
+  border-radius: 1.75rem;
+  box-shadow: 0 1.25rem 3rem rgba(35, 31, 32, 0.12);
+  overflow: hidden;
+}
+
+.jhd-card::before {
+  content: '';
+  display: block;
+  height: 8px;
+  background: linear-gradient(90deg, var(--jhd-yellow), var(--jhd-blue), var(--jhd-pink), var(--jhd-green));
+}
+
+.jhd-card .card-body {
+  padding: 2rem;
+}
+
+.jhd-card .sesi-scroll {
+  border-radius: 1rem;
+}
+
+/* ==== Layout registrasi: maskot dino mengapit form di layar lebar ==== */
+.reg-layout {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.reg-form-col {
+  flex: 0 1 640px;
+  min-width: 0;
+}
+
+.reg-dino {
+  width: 170px;
+  flex-shrink: 0;
+  margin-bottom: 2.5rem;
+  filter: drop-shadow(0 10px 16px rgba(35, 31, 32, 0.18));
+}
+
+.reg-dino-left { transform: scaleX(-1); }

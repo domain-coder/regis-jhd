@@ -1,7 +1,8 @@
 <%- include('../partials/head', { title: 'Login' }) %>
-<div class="container" style="max-width: 400px; margin-top: 8vh;">
-  <h3 class="mb-3 text-center">JHD26 — Login</h3>
-  <div class="card shadow-sm">
+<div class="container text-center" style="max-width: 400px; margin-top: 6vh;">
+  <img src="/img/dino-mascot.webp" alt="" class="brand-mascot mb-2" style="max-width: 90px;">
+  <h3 class="brand-title mb-3">Login Panitia</h3>
+  <div class="card jhd-card">
     <div class="card-body">
       <% if (error) { %>
         <div class="alert alert-danger py-2"><%= error %></div>

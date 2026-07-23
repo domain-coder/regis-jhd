@@ -1,8 +1,9 @@
 <%- include('../partials/head', { title: title }) %>
 <div class="container text-center" style="max-width: 480px; margin-top: 5vh;">
-  <div class="card shadow-sm">
+  <div class="card jhd-card">
     <div class="card-body">
-      <h4 class="text-success mb-3">Registrasi Berhasil!</h4>
+      <img src="/img/dino-mascot.webp" alt="" style="max-width: 100px;" class="mb-2">
+      <h4 class="brand-title text-success mb-3">Registrasi Berhasil!</h4>
       <p>Terima kasih, <strong><%= peserta.nama %></strong>. Berikut QR code Anda untuk absensi:</p>
       <img src="<%= qrDataUrl %>" alt="QR Code" class="img-fluid mb-3" style="max-width: 260px;">
       <p class="text-muted small">
