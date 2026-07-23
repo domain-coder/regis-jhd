@@ -1,0 +1,36 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/navbar', { user }) %>
+<div class="container">
+  <h3>Ruangan</h3>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+  <table class="table table-bordered bg-white">
+    <thead><tr><th>Nama</th><th>Kapasitas</th><th></th></tr></thead>
+    <tbody>
+      <% ruanganList.forEach(r => { %>
+        <tr>
+          <td><input form="ruangan-form-<%= r.id %>" type="text" name="nama" class="form-control form-control-sm" value="<%= r.nama %>" required></td>
+          <td><input form="ruangan-form-<%= r.id %>" type="number" name="kapasitas" class="form-control form-control-sm" value="<%= r.kapasitas %>" min="1" required></td>
+          <td>
+            <form id="ruangan-form-<%= r.id %>" method="post" action="/admin/ruangan/<%= r.id %>"></form>
+            <button form="ruangan-form-<%= r.id %>" class="btn btn-sm btn-outline-primary" type="submit">Simpan</button>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <h5 class="mt-4">Tambah Ruangan</h5>
+  <form method="post" action="/admin/ruangan" class="row g-2">
+    <div class="col-auto">
+      <input type="text" name="nama" class="form-control" placeholder="Nama ruangan" required>
+    </div>
+    <div class="col-auto">
+      <input type="number" name="kapasitas" class="form-control" placeholder="Kapasitas" min="1" required>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Tambah</button>
+    </div>
+  </form>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,38 @@
+<%- include('../../partials/head', { title: title }) %>
+<%- include('../../partials/navbar', { user }) %>
+<div class="container" style="max-width: 600px;">
+  <h3>Tambah Peserta Manual</h3>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <form method="post" action="/admin/peserta">
+    <div class="mb-3">
+      <label class="form-label">Nama</label>
+      <input type="text" name="nama" class="form-control" value="<%= form.nama || '' %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">No. HP/WA</label>
+      <input type="text" name="no_hp" class="form-control" value="<%= form.no_hp || '' %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email (opsional)</label>
+      <input type="email" name="email" class="form-control" value="<%= form.email || '' %>">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Institusi (opsional)</label>
+      <input type="text" name="institusi" class="form-control" value="<%= form.institusi || '' %>">
+    </div>
+    <label class="form-label">Sesi</label>
+    <div class="mb-3">
+      <% sesiList.forEach(s => { %>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="sesi_id" value="<%= s.id %>" id="sesi-<%= s.id %>">
+          <label class="form-check-label" for="sesi-<%= s.id %>">
+            <%= s.nama %> — <%= s.ruangan_nama %> (sisa <%= s.kapasitas - s.jumlah_daftar %>)
+          </label>
+        </div>
+      <% }) %>
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan</button>
+    <a href="/admin/peserta" class="btn btn-link">Batal</a>
+  </form>
+</div>
+<%- include('../../partials/foot') %>

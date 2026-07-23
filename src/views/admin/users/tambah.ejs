@@ -1,0 +1,31 @@
+<%- include('../../partials/head', { title: title }) %>
+<%- include('../../partials/navbar', { user }) %>
+<div class="container" style="max-width: 500px;">
+  <h3>Tambah User</h3>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <form method="post" action="/admin/users">
+    <div class="mb-3">
+      <label class="form-label">Nama</label>
+      <input type="text" name="nama" class="form-control" value="<%= form.nama || '' %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Username</label>
+      <input type="text" name="username" class="form-control" value="<%= form.username || '' %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      <input type="password" name="password" class="form-control" required minlength="6">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Role</label>
+      <select name="role" class="form-select" required>
+        <option value="petugas">petugas</option>
+        <option value="admin_event">admin_event</option>
+        <option value="super_admin">super_admin</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan</button>
+    <a href="/admin/users" class="btn btn-link">Batal</a>
+  </form>
+</div>
+<%- include('../../partials/foot') %>

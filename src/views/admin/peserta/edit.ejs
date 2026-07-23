@@ -1,0 +1,46 @@
+<%- include('../../partials/head', { title: title }) %>
+<%- include('../../partials/navbar', { user }) %>
+<div class="container" style="max-width: 600px;">
+  <h3>Edit Peserta</h3>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <form method="post" action="/admin/peserta/<%= peserta.id %>">
+    <div class="mb-3">
+      <label class="form-label">Nama</label>
+      <input type="text" name="nama" class="form-control" value="<%= peserta.nama %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">No. HP/WA</label>
+      <input type="text" class="form-control" value="<%= peserta.no_hp %>" disabled>
+      <div class="form-text">No. HP tidak dapat diubah di sini (kunci pencegah duplikasi).</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" value="<%= peserta.email || '' %>">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Institusi</label>
+      <input type="text" name="institusi" class="form-control" value="<%= peserta.institusi || '' %>">
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan</button>
+    <a href="/admin/peserta" class="btn btn-link">Kembali</a>
+  </form>
+
+  <hr>
+  <h6>Sesi yang Diikuti</h6>
+  <ul class="list-group mb-3">
+    <% sesiList.forEach(s => { %>
+      <li class="list-group-item"><%= s.nama %> — <%= s.ruangan_nama %></li>
+    <% }) %>
+  </ul>
+
+  <h6>Riwayat Kehadiran</h6>
+  <ul class="list-group">
+    <% kehadiran.forEach(k => { %>
+      <li class="list-group-item"><%= k.sesi_nama %> — <%= k.waktu_hadir %> (<%= k.metode %>)</li>
+    <% }) %>
+    <% if (kehadiran.length === 0) { %>
+      <li class="list-group-item text-muted">Belum ada catatan kehadiran.</li>
+    <% } %>
+  </ul>
+</div>
+<%- include('../../partials/foot') %>

@@ -1,0 +1,25 @@
+# Contoh konfigurasi Nginx reverse proxy untuk JHD26.
+# Salin ke /etc/nginx/sites-available/jhd26, sesuaikan server_name,
+# lalu symlink ke sites-enabled dan reload nginx.
+# Tidak dijalankan otomatis oleh aplikasi ini — murni referensi.
+
+server {
+    listen 80;
+    server_name jhd26.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# Setelah TLS diaktifkan (mis. via certbot), tambahkan server block :443
+# dan redirect :80 -> :443. Set cookie.secure = true di src/app.js (env.nodeEnv === 'production')
+# hanya berlaku benar jika request memang diterima melalui HTTPS.

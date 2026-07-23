@@ -1,0 +1,9 @@
+<%- include('../partials/head', { title: 'Terjadi Kesalahan' }) %>
+<div class="container mt-5">
+  <div class="alert alert-danger">Terjadi kesalahan pada server. Silakan coba lagi.</div>
+  <% if (typeof message !== 'undefined' && message) { %>
+    <pre class="text-muted small"><%= message %></pre>
+  <% } %>
+  <a href="/" class="btn btn-secondary">Kembali ke beranda</a>
+</div>
+<%- include('../partials/foot') %>

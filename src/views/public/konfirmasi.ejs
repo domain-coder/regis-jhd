@@ -1,0 +1,25 @@
+<%- include('../partials/head', { title: title }) %>
+<div class="container text-center" style="max-width: 480px; margin-top: 5vh;">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h4 class="text-success mb-3">Registrasi Berhasil!</h4>
+      <p>Terima kasih, <strong><%= peserta.nama %></strong>. Berikut QR code Anda untuk absensi:</p>
+      <img src="<%= qrDataUrl %>" alt="QR Code" class="img-fluid mb-3" style="max-width: 260px;">
+      <p class="text-muted small">
+        QR ini juga akan dikirim ke WhatsApp Anda (<%= peserta.no_hp %>).
+        Jika belum menerima pesan, simpan/screenshot halaman ini sebagai cadangan.
+      </p>
+      <hr>
+      <h6 class="text-start">Sesi yang diikuti:</h6>
+      <ul class="list-group list-group-flush text-start">
+        <% sesiList.forEach(s => { %>
+          <li class="list-group-item">
+            <strong><%= s.nama %></strong> — <%= s.ruangan_nama %><br>
+            <small class="text-muted"><%= s.waktu_mulai %> s/d <%= s.waktu_selesai %></small>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+</div>
+<%- include('../partials/foot') %>

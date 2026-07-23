@@ -1,0 +1,60 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/navbar', { user }) %>
+<div class="container">
+  <h3>Sesi</h3>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+  <table class="table table-bordered bg-white align-middle">
+    <thead>
+      <tr>
+        <th>Nama Sesi</th><th>Ruangan</th><th>Mulai</th><th>Selesai</th><th>Daftar / Kapasitas</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% sesiList.forEach(s => { %>
+        <tr>
+          <td><input form="sesi-form-<%= s.id %>" type="text" name="nama" class="form-control form-control-sm" value="<%= s.nama %>" required></td>
+          <td>
+            <select form="sesi-form-<%= s.id %>" name="ruangan_id" class="form-select form-select-sm">
+              <% ruanganList.forEach(r => { %>
+                <option value="<%= r.id %>" <%= r.id === s.ruangan_id ? 'selected' : '' %>><%= r.nama %> (<%= r.kapasitas %>)</option>
+              <% }) %>
+            </select>
+          </td>
+          <td><input form="sesi-form-<%= s.id %>" type="datetime-local" name="waktu_mulai" class="form-control form-control-sm" value="<%= s.waktu_mulai %>" required></td>
+          <td><input form="sesi-form-<%= s.id %>" type="datetime-local" name="waktu_selesai" class="form-control form-control-sm" value="<%= s.waktu_selesai %>" required></td>
+          <td><%= s.jumlah_daftar %> / <%= s.kapasitas %> <span class="text-muted">(sisa <%= sisaKuota(s) %>)</span></td>
+          <td>
+            <form id="sesi-form-<%= s.id %>" method="post" action="/admin/sesi/<%= s.id %>"></form>
+            <button form="sesi-form-<%= s.id %>" class="btn btn-sm btn-outline-primary" type="submit">Simpan</button>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <h5 class="mt-4">Tambah Sesi</h5>
+  <form method="post" action="/admin/sesi" class="row g-2">
+    <div class="col-auto">
+      <input type="text" name="nama" class="form-control" placeholder="Nama sesi" required>
+    </div>
+    <div class="col-auto">
+      <select name="ruangan_id" class="form-select" required>
+        <option value="" disabled selected>Pilih ruangan</option>
+        <% ruanganList.forEach(r => { %>
+          <option value="<%= r.id %>"><%= r.nama %> (kapasitas <%= r.kapasitas %>)</option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="datetime-local" name="waktu_mulai" class="form-control" required>
+    </div>
+    <div class="col-auto">
+      <input type="datetime-local" name="waktu_selesai" class="form-control" required>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Tambah</button>
+    </div>
+  </form>
+</div>
+<%- include('../partials/foot') %>

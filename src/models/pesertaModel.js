@@ -1,0 +1,150 @@
+const crypto = require('crypto');
+const db = require('../config/db');
+const { normalizePhone } = require('../services/phone');
+
+class DuplikatError extends Error {}
+class SesiPenuhError extends Error {}
+
+function findByToken(token) {
+  return db.prepare('SELECT * FROM peserta WHERE qr_token = ?').get(token);
+}
+
+function findById(id) {
+  return db.prepare('SELECT * FROM peserta WHERE id = ?').get(id);
+}
+
+function isTerdaftarDiSesi(pesertaId, sesiId) {
+  return !!db
+    .prepare('SELECT 1 FROM peserta_sesi WHERE peserta_id = ? AND sesi_id = ?')
+    .get(pesertaId, sesiId);
+}
+
+function sesiUntukPeserta(pesertaId) {
+  return db
+    .prepare(
+      `SELECT sesi.id, sesi.nama, sesi.waktu_mulai, sesi.waktu_selesai, ruangan.nama AS ruangan_nama
+       FROM peserta_sesi
+       JOIN sesi ON sesi.id = peserta_sesi.sesi_id
+       JOIN ruangan ON ruangan.id = sesi.ruangan_id
+       WHERE peserta_sesi.peserta_id = ?
+       ORDER BY sesi.waktu_mulai`
+    )
+    .all(pesertaId);
+}
+
+const _registerTx = db.transaction((eventId, data) => {
+  const noHp = normalizePhone(data.no_hp);
+
+  const dup = db
+    .prepare('SELECT id FROM peserta WHERE event_id = ? AND no_hp = ?')
+    .get(eventId, noHp);
+  if (dup) {
+    throw new DuplikatError('Nomor HP ini sudah terdaftar pada event ini.');
+  }
+
+  for (const sesiId of data.sesi_ids) {
+    const sesi = db
+      .prepare(
+        `SELECT sesi.id, sesi.nama, ruangan.kapasitas,
+                (SELECT COUNT(*) FROM peserta_sesi WHERE sesi_id = sesi.id) AS jumlah_daftar
+         FROM sesi JOIN ruangan ON ruangan.id = sesi.ruangan_id
+         WHERE sesi.id = ?`
+      )
+      .get(sesiId);
+    if (!sesi) {
+      throw new SesiPenuhError('Sesi yang dipilih tidak ditemukan.');
+    }
+    if (sesi.jumlah_daftar >= sesi.kapasitas) {
+      throw new SesiPenuhError(`Sesi "${sesi.nama}" sudah penuh.`);
+    }
+  }
+
+  const qrToken = crypto.randomUUID();
+  const result = db
+    .prepare(
+      `INSERT INTO peserta (event_id, nama, no_hp, email, institusi, qr_token)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+    .run(eventId, data.nama, noHp, data.email || null, data.institusi || null, qrToken);
+
+  const pesertaId = result.lastInsertRowid;
+  const insertPesertaSesi = db.prepare(
+    'INSERT INTO peserta_sesi (peserta_id, sesi_id) VALUES (?, ?)'
+  );
+  for (const sesiId of data.sesi_ids) {
+    insertPesertaSesi.run(pesertaId, sesiId);
+  }
+
+  return findById(pesertaId);
+});
+
+function register(eventId, data) {
+  return _registerTx.immediate(eventId, data);
+}
+
+function list({ eventId, sesiId, q }) {
+  let sql = `
+    SELECT DISTINCT peserta.* FROM peserta
+    LEFT JOIN peserta_sesi ON peserta_sesi.peserta_id = peserta.id
+    WHERE peserta.event_id = ?
+  `;
+  const params = [eventId];
+  if (sesiId) {
+    sql += ' AND peserta_sesi.sesi_id = ?';
+    params.push(sesiId);
+  }
+  if (q) {
+    sql += ' AND (peserta.nama LIKE ? OR peserta.no_hp LIKE ?)';
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  sql += ' ORDER BY peserta.created_at DESC';
+  return db.prepare(sql).all(...params);
+}
+
+function update(id, { nama, email, institusi }) {
+  db.prepare('UPDATE peserta SET nama = ?, email = ?, institusi = ? WHERE id = ?').run(
+    nama,
+    email || null,
+    institusi || null,
+    id
+  );
+  return findById(id);
+}
+
+function remove(id) {
+  db.prepare('DELETE FROM kehadiran WHERE peserta_id = ?').run(id);
+  db.prepare('DELETE FROM peserta_sesi WHERE peserta_id = ?').run(id);
+  db.prepare('DELETE FROM peserta WHERE id = ?').run(id);
+}
+
+function markResend(id) {
+  db.prepare("UPDATE peserta SET status_kirim_qr = 'pending', catatan_kirim = NULL WHERE id = ?").run(id);
+}
+
+function pendingQueue() {
+  return db.prepare("SELECT * FROM peserta WHERE status_kirim_qr = 'pending' ORDER BY created_at").all();
+}
+
+function updateStatusKirim(id, status, keterangan) {
+  db.prepare('UPDATE peserta SET status_kirim_qr = ?, catatan_kirim = ? WHERE id = ?').run(
+    status,
+    keterangan || null,
+    id
+  );
+}
+
+module.exports = {
+  DuplikatError,
+  SesiPenuhError,
+  findByToken,
+  findById,
+  isTerdaftarDiSesi,
+  sesiUntukPeserta,
+  register,
+  list,
+  update,
+  remove,
+  markResend,
+  pendingQueue,
+  updateStatusKirim,
+};

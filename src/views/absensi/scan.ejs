@@ -1,0 +1,137 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/navbar', { user }) %>
+<div class="container" style="max-width: 560px;">
+  <h3>Scan Absensi</h3>
+
+  <div class="mb-3">
+    <label class="form-label">Pilih Sesi Aktif</label>
+    <select id="sesi-select" class="form-select">
+      <option value="" disabled selected>-- pilih sesi --</option>
+      <% sesiList.forEach(s => { %>
+        <option value="<%= s.id %>"><%= s.nama %> — <%= s.ruangan_nama %></option>
+      <% }) %>
+    </select>
+  </div>
+
+  <div id="qr-reader" class="mb-3"></div>
+  <div class="d-grid gap-2 mb-3">
+    <button id="btn-start" class="btn btn-primary">Mulai Scan</button>
+    <button id="btn-stop" class="btn btn-outline-secondary d-none">Berhenti Scan</button>
+  </div>
+
+  <div id="scan-result" class="scan-result mb-3 d-none"></div>
+
+  <hr>
+  <h6>Absensi Manual (Walk-in)</h6>
+  <input id="manual-search" type="text" class="form-control mb-2" placeholder="Cari nama / no. HP (min. 2 huruf)">
+  <div id="manual-results" class="list-group mb-3"></div>
+
+  <hr>
+  <h6>Riwayat Scan (sesi ini)</h6>
+  <ul id="riwayat-list" class="list-group"></ul>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  const sesiSelect = document.getElementById('sesi-select');
+  const btnStart = document.getElementById('btn-start');
+  const btnStop = document.getElementById('btn-stop');
+  const resultBox = document.getElementById('scan-result');
+  const riwayatList = document.getElementById('riwayat-list');
+  const manualSearch = document.getElementById('manual-search');
+  const manualResults = document.getElementById('manual-results');
+
+  let html5QrCode = null;
+  let lastScanAt = 0;
+
+  function showResult(hasil) {
+    resultBox.classList.remove('d-none', 'sukses', 'gagal', 'tidak-terdaftar');
+    const cls = hasil.status === 'sukses' ? 'sukses' : hasil.status === 'gagal' ? 'gagal' : 'tidak-terdaftar';
+    resultBox.classList.add(cls);
+    resultBox.textContent = hasil.message;
+
+    const li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.textContent = `[${new Date().toLocaleTimeString()}] ${hasil.message}`;
+    riwayatList.prepend(li);
+  }
+
+  async function kirimScan(qrToken) {
+    const sesiId = sesiSelect.value;
+    if (!sesiId) {
+      showResult({ status: 'gagal', message: 'Pilih sesi terlebih dahulu.' });
+      return;
+    }
+    const res = await fetch('/api/absensi/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qr_token: qrToken, sesi_id: sesiId }),
+    });
+    showResult(await res.json());
+  }
+
+  btnStart.addEventListener('click', async () => {
+    if (!sesiSelect.value) {
+      showResult({ status: 'gagal', message: 'Pilih sesi terlebih dahulu.' });
+      return;
+    }
+    html5QrCode = new Html5Qrcode('qr-reader');
+    await html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 250 },
+      (decodedText) => {
+        const now = Date.now();
+        if (now - lastScanAt < 2000) return; // hindari double-scan beruntun
+        lastScanAt = now;
+        kirimScan(decodedText);
+      },
+      () => {}
+    );
+    btnStart.classList.add('d-none');
+    btnStop.classList.remove('d-none');
+  });
+
+  btnStop.addEventListener('click', async () => {
+    if (html5QrCode) {
+      await html5QrCode.stop();
+      html5QrCode.clear();
+    }
+    btnStop.classList.add('d-none');
+    btnStart.classList.remove('d-none');
+  });
+
+  let searchTimeout = null;
+  manualSearch.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+      const q = manualSearch.value.trim();
+      manualResults.innerHTML = '';
+      if (q.length < 2) return;
+      const sesiId = sesiSelect.value;
+      const res = await fetch(`/api/absensi/cari?q=${encodeURIComponent(q)}&sesi_id=${sesiId}`);
+      const { data } = await res.json();
+      data.forEach((p) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between';
+        btn.innerHTML = `<span>${p.nama} — ${p.no_hp}</span>` + (p.sudah_absen ? '<span class="badge bg-danger">Sudah absen</span>' : '');
+        btn.addEventListener('click', async () => {
+          if (!sesiSelect.value) {
+            showResult({ status: 'gagal', message: 'Pilih sesi terlebih dahulu.' });
+            return;
+          }
+          const res2 = await fetch('/api/absensi/manual', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ peserta_id: p.id, sesi_id: sesiSelect.value }),
+          });
+          showResult(await res2.json());
+          manualResults.innerHTML = '';
+          manualSearch.value = '';
+        });
+        manualResults.appendChild(btn);
+      });
+    }, 300);
+  });
+</script>
+<%- include('../partials/foot') %>

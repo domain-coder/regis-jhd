@@ -1,0 +1,65 @@
+<%- include('../partials/head', { title: title }) %>
+<div class="container" style="max-width: 640px; margin-top: 3vh;">
+  <h3 class="mb-3 text-center">Registrasi Peserta JHD26</h3>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+      <form method="post" action="/api/public/register">
+        <div class="mb-3">
+          <label class="form-label">Nama Lengkap</label>
+          <input type="text" name="nama" class="form-control" value="<%= form.nama || '' %>" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nomor HP/WA</label>
+          <input type="text" name="no_hp" class="form-control" placeholder="08xxxxxxxxxx" value="<%= form.no_hp || '' %>" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Email (opsional)</label>
+          <input type="email" name="email" class="form-control" value="<%= form.email || '' %>">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Institusi (opsional)</label>
+          <input type="text" name="institusi" class="form-control" value="<%= form.institusi || '' %>">
+        </div>
+
+        <label class="form-label">Pilih Sesi (boleh lebih dari satu)</label>
+        <div id="sesi-list" class="list-group mb-3">
+          <% sesiList.forEach(s => { %>
+            <label class="list-group-item d-flex align-items-center" data-sesi-id="<%= s.id %>">
+              <input class="form-check-input me-2" type="checkbox" name="sesi_id" value="<%= s.id %>" <%= s.sisa <= 0 ? 'disabled' : '' %>>
+              <span class="flex-grow-1">
+                <strong><%= s.nama %></strong> — <%= s.ruangan_nama %><br>
+                <small class="text-muted"><%= s.waktu_mulai %> s/d <%= s.waktu_selesai %></small>
+              </span>
+              <span class="badge <%= s.sisa <= 0 ? 'bg-danger' : 'bg-success' %> sisa-badge">
+                <%= s.sisa <= 0 ? 'Penuh' : `Sisa ${s.sisa}` %>
+              </span>
+            </label>
+          <% }) %>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Daftar</button>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  // Refresh sisa kuota secara berkala agar peserta tahu jika sesi baru saja penuh.
+  async function refreshKuota() {
+    try {
+      const res = await fetch('/api/public/sesi');
+      const { data } = await res.json();
+      data.forEach((s) => {
+        const row = document.querySelector(`[data-sesi-id="${s.id}"]`);
+        if (!row) return;
+        const badge = row.querySelector('.sisa-badge');
+        const checkbox = row.querySelector('input[type=checkbox]');
+        badge.textContent = s.sisa <= 0 ? 'Penuh' : `Sisa ${s.sisa}`;
+        badge.className = 'badge sisa-badge ' + (s.sisa <= 0 ? 'bg-danger' : 'bg-success');
+        checkbox.disabled = s.sisa <= 0;
+      });
+    } catch (e) { /* abaikan kegagalan refresh, form tetap bisa submit */ }
+  }
+  setInterval(refreshKuota, 15000);
+</script>
+<%- include('../partials/foot') %>

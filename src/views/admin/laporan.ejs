@@ -1,0 +1,58 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/navbar', { user }) %>
+<div class="container">
+  <h3>Laporan</h3>
+
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+    <h5>Rekap per Sesi</h5>
+    <a href="/admin/laporan/export?jenis=sesi" class="btn btn-sm btn-outline-success">Export CSV</a>
+  </div>
+  <table class="table table-bordered bg-white">
+    <thead>
+      <tr><th>Sesi</th><th>Ruangan</th><th>Daftar</th><th>Hadir</th><th>% Hadir</th><th>Sisa Kuota</th></tr>
+    </thead>
+    <tbody>
+      <% rekapSesi.forEach(s => { %>
+        <tr>
+          <td><%= s.nama %></td>
+          <td><%= s.ruangan_nama %></td>
+          <td><%= s.jumlah_daftar %> / <%= s.kapasitas %></td>
+          <td><%= s.jumlah_hadir %></td>
+          <td><%= s.persen_hadir %>%</td>
+          <td><%= s.sisa_kuota %></td>
+        </tr>
+      <% }) %>
+      <% if (rekapSesi.length === 0) { %>
+        <tr><td colspan="6" class="text-center text-muted">Belum ada sesi.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+    <h5>Rekap per Peserta</h5>
+    <a href="/admin/laporan/export?jenis=peserta" class="btn btn-sm btn-outline-success">Export CSV</a>
+  </div>
+  <table class="table table-bordered bg-white">
+    <thead>
+      <tr><th>Nama</th><th>No. HP</th><th>Sesi Diikuti</th><th>Kehadiran</th></tr>
+    </thead>
+    <tbody>
+      <% rekapPeserta.forEach(p => { %>
+        <tr>
+          <td><%= p.nama %></td>
+          <td><%= p.no_hp %></td>
+          <td><%= p.sesi.map(s => s.nama).join(', ') %></td>
+          <td>
+            <% p.sesi.forEach(s => { %>
+              <span class="badge <%= s.hadir ? 'bg-success' : 'bg-secondary' %>"><%= s.nama %></span>
+            <% }) %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (rekapPeserta.length === 0) { %>
+        <tr><td colspan="4" class="text-center text-muted">Belum ada peserta.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/foot') %>

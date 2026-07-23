@@ -1,0 +1,42 @@
+<%- include('../../partials/head', { title: title }) %>
+<%- include('../../partials/navbar', { user }) %>
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>User</h3>
+    <a href="/admin/users/tambah" class="btn btn-primary">+ Tambah User</a>
+  </div>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+  <table class="table table-bordered bg-white align-middle">
+    <thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Aktif</th><th>Reset Password</th></tr></thead>
+    <tbody>
+      <% userList.forEach(u => { %>
+        <tr>
+          <td><input form="user-form-<%= u.id %>" type="text" name="nama" class="form-control form-control-sm" value="<%= u.nama %>" required></td>
+          <td><%= u.username %></td>
+          <td>
+            <select form="user-form-<%= u.id %>" name="role" class="form-select form-select-sm">
+              <% ['super_admin', 'admin_event', 'petugas'].forEach(r => { %>
+                <option value="<%= r %>" <%= r === u.role ? 'selected' : '' %>><%= r %></option>
+              <% }) %>
+            </select>
+          </td>
+          <td class="text-center">
+            <input form="user-form-<%= u.id %>" type="checkbox" name="active" <%= u.active ? 'checked' : '' %>>
+          </td>
+          <td>
+            <form id="user-form-<%= u.id %>" method="post" action="/admin/users/<%= u.id %>" class="d-inline">
+              <button class="btn btn-sm btn-outline-primary" type="submit">Simpan</button>
+            </form>
+            <form method="post" action="/admin/users/<%= u.id %>/reset-password" class="d-inline-flex gap-1"
+                  onsubmit="return this.password.value.length >= 6 || alert('Password minimal 6 karakter')">
+              <input type="password" name="password" class="form-control form-control-sm" placeholder="Password baru" style="width: 140px;">
+              <button class="btn btn-sm btn-outline-warning" type="submit">Reset</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../../partials/foot') %>

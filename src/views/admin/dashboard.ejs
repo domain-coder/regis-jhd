@@ -1,0 +1,33 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/navbar', { user }) %>
+<div class="container">
+  <h3>Dashboard — <%= event.nama %></h3>
+  <p class="text-muted">Selamat datang, <%= user.nama %>.</p>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <div class="fs-2 fw-bold"><%= stats.totalSesi %></div>
+          <div class="text-muted">Sesi</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <div class="fs-2 fw-bold"><%= stats.totalPeserta %></div>
+          <div class="text-muted">Peserta Terdaftar</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <div class="fs-2 fw-bold"><%= stats.antrianHermes %></div>
+          <div class="text-muted">Antrian Kirim QR (Hermes)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/foot') %>

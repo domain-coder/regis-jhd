@@ -1,0 +1,32 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/navbar', { user }) %>
+<div class="container" style="max-width: 600px;">
+  <h3>Detail Event</h3>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <form method="post" action="/admin/event">
+    <div class="mb-3">
+      <label class="form-label">Nama Event</label>
+      <input type="text" name="nama" class="form-control" value="<%= event.nama %>" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Deskripsi</label>
+      <textarea name="deskripsi" class="form-control" rows="3"><%= event.deskripsi || '' %></textarea>
+    </div>
+    <div class="row">
+      <div class="col mb-3">
+        <label class="form-label">Tanggal Mulai</label>
+        <input type="date" name="tanggal_mulai" class="form-control" value="<%= (event.tanggal_mulai || '').slice(0,10) %>">
+      </div>
+      <div class="col mb-3">
+        <label class="form-label">Tanggal Selesai</label>
+        <input type="date" name="tanggal_selesai" class="form-control" value="<%= (event.tanggal_selesai || '').slice(0,10) %>">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Lokasi</label>
+      <input type="text" name="lokasi" class="form-control" value="<%= event.lokasi || '' %>">
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan</button>
+  </form>
+</div>
+<%- include('../partials/foot') %>
