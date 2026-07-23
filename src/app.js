@@ -20,6 +20,12 @@ const pesertaModel = require('./models/pesertaModel');
 
 const app = express();
 
+// Diperlukan agar cookie session `secure: true` berfungsi di balik reverse proxy/tunnel
+// (mis. Cloudflare Tunnel) — proxy menerima HTTPS dari klien lalu meneruskan sebagai HTTP
+// biasa ke app ini; trust proxy membuat Express membaca header X-Forwarded-Proto agar tetap
+// tahu request aslinya HTTPS.
+app.set('trust proxy', 1);
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
