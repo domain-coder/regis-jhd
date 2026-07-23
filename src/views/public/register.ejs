@@ -37,6 +37,10 @@
           </label>
         </div>
 
+        <% if (turnstileSiteKey) { %>
+          <div class="cf-turnstile mb-3" data-sitekey="<%= turnstileSiteKey %>"></div>
+        <% } %>
+
         <button type="submit" class="btn btn-primary w-100">Daftar</button>
       </form>
       </div>
@@ -44,5 +48,8 @@
   </div>
   <img src="/img/dino-biru-small.webp" alt="" class="reg-dino reg-dino-right d-none d-lg-block">
 </div>
+<% if (turnstileSiteKey) { %>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<% } %>
 <script src="/js/sesi-picker.js"></script>
 <%- include('../partials/foot') %>

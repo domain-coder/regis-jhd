@@ -5,6 +5,8 @@ const sesiModel = require('../models/sesiModel');
 const pesertaModel = require('../models/pesertaModel');
 const { generateQrDataUrl } = require('../services/qr');
 const { labelSesi } = require('../services/tanggal');
+const { verifyTurnstile } = require('../services/turnstile');
+const env = require('../config/env');
 
 const router = express.Router();
 
@@ -24,7 +26,13 @@ function sesiPublikList() {
 }
 
 router.get('/register', (req, res) => {
-  res.render('public/register', { title: 'Registrasi', sesiList: sesiPublikList(), error: null, form: {} });
+  res.render('public/register', {
+    title: 'Registrasi',
+    sesiList: sesiPublikList(),
+    turnstileSiteKey: env.turnstile.siteKey,
+    error: null,
+    form: {},
+  });
 });
 
 router.get('/api/public/sesi', (req, res) => {
@@ -47,13 +55,25 @@ const registerSchema = z.object({
     .refine((v) => v, 'Anda harus menyetujui persetujuan pemrosesan data pribadi untuk mendaftar.'),
 });
 
-router.post('/api/public/register', (req, res) => {
+router.post('/api/public/register', async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).render('public/register', {
       title: 'Registrasi',
       sesiList: sesiPublikList(),
+      turnstileSiteKey: env.turnstile.siteKey,
       error: parsed.error.issues[0].message,
+      form: req.body,
+    });
+  }
+
+  const turnstileOk = await verifyTurnstile(req.body['cf-turnstile-response'], req.ip);
+  if (!turnstileOk) {
+    return res.status(400).render('public/register', {
+      title: 'Registrasi',
+      sesiList: sesiPublikList(),
+      turnstileSiteKey: env.turnstile.siteKey,
+      error: 'Verifikasi keamanan gagal, silakan coba lagi.',
       form: req.body,
     });
   }
@@ -79,6 +99,7 @@ router.post('/api/public/register', (req, res) => {
       return res.status(400).render('public/register', {
         title: 'Registrasi',
         sesiList: sesiPublikList(),
+        turnstileSiteKey: env.turnstile.siteKey,
         error: err.message,
         form: req.body,
       });

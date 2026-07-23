@@ -15,6 +15,10 @@ module.exports = {
   dbPath: path.resolve(process.cwd(), process.env.DB_PATH || './data/jhd26.sqlite'),
   sessionSecret: required('SESSION_SECRET'),
   hermesApiKey: required('HERMES_API_KEY'),
+  turnstile: {
+    siteKey: process.env.TURNSTILE_SITE_KEY || '',
+    secretKey: process.env.TURNSTILE_SECRET_KEY || '',
+  },
   seedAdmin: {
     username: process.env.SEED_ADMIN_USERNAME || 'admin',
     password: process.env.SEED_ADMIN_PASSWORD || 'admin123',
