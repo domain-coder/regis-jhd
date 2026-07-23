@@ -49,8 +49,7 @@ const manualSchema = z.object({
   email: z.string().trim().email('Email tidak valid').optional().or(z.literal('')),
   institusi: z.string().trim().optional(),
   sesi_id: z
-    .union([z.string(), z.array(z.string())])
-    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .preprocess((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]), z.array(z.string()))
     .refine((arr) => arr.length > 0, 'Pilih minimal satu sesi')
     .transform((arr) => arr.map(Number)),
 });
