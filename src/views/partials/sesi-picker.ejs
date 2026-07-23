@@ -1,0 +1,28 @@
+<div id="sesi-list" class="list-group mb-3 sesi-scroll">
+  <% let lastGroup = null; %>
+  <% sesiList.forEach(s => { %>
+    <% const groupKey = s.tanggal_label + '|' + s.jam_label; %>
+    <% if (groupKey !== lastGroup) { lastGroup = groupKey; %>
+      <div class="sesi-group-header"><%= s.tanggal_label %> · <%= s.jam_label %></div>
+    <% } %>
+    <label
+      class="list-group-item d-flex align-items-center"
+      data-sesi-id="<%= s.id %>"
+      data-full="<%= s.sisa <= 0 ? 1 : 0 %>"
+    >
+      <input
+        class="form-check-input me-2"
+        type="checkbox"
+        name="sesi_id"
+        value="<%= s.id %>"
+        data-mulai="<%= s.waktu_mulai %>"
+        data-selesai="<%= s.waktu_selesai %>"
+        <%= s.sisa <= 0 ? 'disabled' : '' %>
+      >
+      <span class="flex-grow-1">
+        <strong><%= s.nama %></strong> — <%= s.ruangan_nama %>
+      </span>
+      <span class="badge bg-success sesi-badge"><%= `Sisa ${s.sisa}` %></span>
+    </label>
+  <% }) %>
+</div>

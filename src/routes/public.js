@@ -4,22 +4,9 @@ const eventModel = require('../models/eventModel');
 const sesiModel = require('../models/sesiModel');
 const pesertaModel = require('../models/pesertaModel');
 const { generateQrDataUrl } = require('../services/qr');
+const { labelSesi } = require('../services/tanggal');
 
 const router = express.Router();
-
-const BULAN = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-];
-
-function formatTanggal(iso) {
-  const [y, m, d] = iso.split('T')[0].split('-').map(Number);
-  return `${d} ${BULAN[m - 1]} ${y}`;
-}
-
-function formatJam(iso) {
-  return (iso.split('T')[1] || '').slice(0, 5);
-}
 
 function sesiPublikList() {
   const event = eventModel.getActive();
@@ -29,8 +16,7 @@ function sesiPublikList() {
     ruangan_nama: s.ruangan_nama,
     waktu_mulai: s.waktu_mulai,
     waktu_selesai: s.waktu_selesai,
-    tanggal_label: formatTanggal(s.waktu_mulai),
-    jam_label: `${formatJam(s.waktu_mulai)}–${formatJam(s.waktu_selesai)} WIB`,
+    ...labelSesi(s),
     kapasitas: s.kapasitas,
     jumlah_daftar: s.jumlah_daftar,
     sisa: sesiModel.sisaKuota(s),

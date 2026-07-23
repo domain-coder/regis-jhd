@@ -7,6 +7,7 @@ const { z } = require('zod');
 const eventModel = require('../../models/eventModel');
 const sesiModel = require('../../models/sesiModel');
 const pesertaModel = require('../../models/pesertaModel');
+const { labelSesi } = require('../../services/tanggal');
 const { requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -14,6 +15,14 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 *
 
 function currentEvent() {
   return eventModel.getActive();
+}
+
+function sesiUntukForm(eventId) {
+  return sesiModel.listByEvent(eventId).map((s) => ({
+    ...s,
+    ...labelSesi(s),
+    sisa: sesiModel.sisaKuota(s),
+  }));
 }
 
 router.get('/peserta', requireRole('super_admin', 'admin_event'), (req, res) => {
@@ -37,7 +46,7 @@ router.get('/peserta/tambah', requireRole('super_admin', 'admin_event'), (req, r
   const event = currentEvent();
   res.render('admin/peserta/tambah', {
     title: 'Tambah Peserta',
-    sesiList: sesiModel.listByEvent(event.id),
+    sesiList: sesiUntukForm(event.id),
     error: null,
     form: {},
   });
@@ -60,7 +69,7 @@ router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) =>
   if (!parsed.success) {
     return res.status(400).render('admin/peserta/tambah', {
       title: 'Tambah Peserta',
-      sesiList: sesiModel.listByEvent(event.id),
+      sesiList: sesiUntukForm(event.id),
       error: parsed.error.issues[0].message,
       form: req.body,
     });
@@ -82,7 +91,7 @@ router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) =>
     ) {
       return res.status(400).render('admin/peserta/tambah', {
         title: 'Tambah Peserta',
-        sesiList: sesiModel.listByEvent(event.id),
+        sesiList: sesiUntukForm(event.id),
         error: err.message,
         form: req.body,
       });
