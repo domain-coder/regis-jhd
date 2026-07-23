@@ -13,6 +13,13 @@
     </select>
   </div>
 
+  <div class="mb-3">
+    <label class="form-label">Kamera</label>
+    <select id="camera-select" class="form-select" disabled>
+      <option value="">-- klik "Mulai Scan" untuk deteksi kamera --</option>
+    </select>
+  </div>
+
   <div id="qr-reader" class="mb-3"></div>
   <div class="d-grid gap-2 mb-3">
     <button id="btn-start" class="btn btn-primary">Mulai Scan</button>
@@ -34,6 +41,7 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
   const sesiSelect = document.getElementById('sesi-select');
+  const cameraSelect = document.getElementById('camera-select');
   const btnStart = document.getElementById('btn-start');
   const btnStop = document.getElementById('btn-stop');
   const resultBox = document.getElementById('scan-result');
@@ -43,6 +51,24 @@
 
   let html5QrCode = null;
   let lastScanAt = 0;
+  let cameraList = [];
+
+  function pilihKameraDefault(cameras) {
+    const belakang = cameras.find((c) => /back|belakang|rear|environment/i.test(c.label));
+    return belakang || cameras[cameras.length - 1];
+  }
+
+  function onScanSuccess(decodedText) {
+    const now = Date.now();
+    if (now - lastScanAt < 2000) return; // hindari double-scan beruntun
+    lastScanAt = now;
+    kirimScan(decodedText);
+  }
+
+  async function mulaiKamera(cameraId) {
+    html5QrCode = new Html5Qrcode('qr-reader');
+    await html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, onScanSuccess, () => {});
+  }
 
   function showResult(hasil) {
     resultBox.classList.remove('d-none', 'sukses', 'gagal', 'tidak-terdaftar');
@@ -83,22 +109,34 @@
       return;
     }
     try {
-      html5QrCode = new Html5Qrcode('qr-reader');
-      await html5QrCode.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          const now = Date.now();
-          if (now - lastScanAt < 2000) return; // hindari double-scan beruntun
-          lastScanAt = now;
-          kirimScan(decodedText);
-        },
-        () => {}
-      );
+      if (cameraList.length === 0) {
+        cameraList = await Html5Qrcode.getCameras();
+        cameraSelect.innerHTML = '';
+        cameraList.forEach((c, idx) => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.label || `Kamera ${idx + 1}`;
+          cameraSelect.appendChild(opt);
+        });
+        cameraSelect.disabled = false;
+        cameraSelect.value = pilihKameraDefault(cameraList).id;
+      }
+      await mulaiKamera(cameraSelect.value);
       btnStart.classList.add('d-none');
       btnStop.classList.remove('d-none');
     } catch (err) {
       showResult({ status: 'gagal', message: `Kamera gagal diaktifkan: ${err.message || err}` });
+    }
+  });
+
+  cameraSelect.addEventListener('change', async () => {
+    if (btnStop.classList.contains('d-none')) return; // belum mulai scan, tidak perlu restart
+    try {
+      await html5QrCode.stop();
+      html5QrCode.clear();
+      await mulaiKamera(cameraSelect.value);
+    } catch (err) {
+      showResult({ status: 'gagal', message: `Gagal ganti kamera: ${err.message || err}` });
     }
   });
 
