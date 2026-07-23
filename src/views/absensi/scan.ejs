@@ -75,20 +75,31 @@
       showResult({ status: 'gagal', message: 'Pilih sesi terlebih dahulu.' });
       return;
     }
-    html5QrCode = new Html5Qrcode('qr-reader');
-    await html5QrCode.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: 250 },
-      (decodedText) => {
-        const now = Date.now();
-        if (now - lastScanAt < 2000) return; // hindari double-scan beruntun
-        lastScanAt = now;
-        kirimScan(decodedText);
-      },
-      () => {}
-    );
-    btnStart.classList.add('d-none');
-    btnStop.classList.remove('d-none');
+    if (!navigator.mediaDevices || !window.isSecureContext) {
+      showResult({
+        status: 'gagal',
+        message: 'Kamera tidak bisa diakses: browser hanya mengizinkan kamera lewat HTTPS atau localhost. Gunakan tombol "Cari Manual" di bawah untuk sementara.',
+      });
+      return;
+    }
+    try {
+      html5QrCode = new Html5Qrcode('qr-reader');
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => {
+          const now = Date.now();
+          if (now - lastScanAt < 2000) return; // hindari double-scan beruntun
+          lastScanAt = now;
+          kirimScan(decodedText);
+        },
+        () => {}
+      );
+      btnStart.classList.add('d-none');
+      btnStop.classList.remove('d-none');
+    } catch (err) {
+      showResult({ status: 'gagal', message: `Kamera gagal diaktifkan: ${err.message || err}` });
+    }
   });
 
   btnStop.addEventListener('click', async () => {
