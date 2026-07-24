@@ -2,7 +2,8 @@
 
 Aplikasi web sederhana untuk registrasi peserta, absensi via scan QR, dan administrasi
 event JHD26. Dibangun khusus untuk event ini (single-event, bukan multi-tenant).
-Lihat `master-prompt.txt` dan PRD terkait untuk detail requirement lengkap, dan
+Lihat `master-prompt.txt` dan PRD terkait untuk detail requirement lengkap,
+`WORKFLOW.md` untuk alur proses bisnis (registrasi, absensi, pelaporan), dan
 `CHANGELOG.md` untuk riwayat aktivitas pengembangan & operasional server.
 
 ## Tech Stack
