@@ -18,8 +18,10 @@ sistem ini sekarang mengirim WA langsung, dikelola dari server yang sama.
   supaya peserta dapat WA dalam hitungan detik, TANPA pernah menunda atau
   menggagalkan proses registrasi (prinsip non-fungsional dari PRD tetap
   dipertahankan meski arsitekturnya berubah). **Sweep berkala** (default tiap
-  1 menit) jadi jaring pengaman untuk kasus trigger gagal & hasil impor CSV
-  massal (yang sengaja tidak di-trigger satu-satu).
+  5 menit — sengaja tidak sering, karena hanya jaring pengaman untuk *flush*
+  penumpukan sekaligus, bukan jalur utama) jadi jaring pengaman untuk kasus
+  trigger gagal & hasil impor CSV massal (yang sengaja tidak di-trigger
+  satu-satu).
 - Pairing pakai kode 8 karakter (bukan scan QR) — cocok untuk server headless,
   lihat README bagian "Pengiriman WhatsApp".
 - Sempat dibangun sebagai proyek terpisah (`hermes-gateway`, repo GitHub

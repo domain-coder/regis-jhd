@@ -23,7 +23,7 @@ module.exports = {
   },
   wa: {
     phoneNumber: process.env.WA_PHONE_NUMBER || '',
-    pollIntervalMs: parseInt(process.env.WA_POLL_INTERVAL_MS || '60000', 10),
+    pollIntervalMs: parseInt(process.env.WA_POLL_INTERVAL_MS || '300000', 10),
     sendDelayMs: parseInt(process.env.WA_SEND_DELAY_MS || '4000', 10),
     authDir: path.resolve(process.cwd(), process.env.WA_AUTH_DIR || './data/wa-auth'),
   },

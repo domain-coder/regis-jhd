@@ -132,10 +132,13 @@ bukan sistem/proses terpisah.
 1. Begitu registrasi sukses (dari form publik, tambah manual admin, atau resend),
    sistem langsung mencoba kirim WA saat itu juga (*fire-and-forget* — tidak
    ditunggu, tidak bisa menggagalkan/menunda registrasi).
-2. Ada sweep berkala (`WA_POLL_INTERVAL_MS`, default 1 menit) yang memproses ulang
+2. Ada sweep berkala (`WA_POLL_INTERVAL_MS`, default 5 menit) yang memproses ulang
    peserta berstatus `pending` sebagai jaring pengaman — menangkap kasus trigger
    instan gagal (mis. app baru restart) dan hasil impor CSV massal (yang sengaja
    tidak di-trigger satu-satu, supaya tidak ada lonjakan kirim beruntun).
+   Interval sengaja tidak terlalu sering — sweep ini untuk *flush* penumpukan
+   sekaligus kalau ada kegagalan/keterlambatan, bukan jalur utama pengiriman
+   (yang sudah ditangani trigger instan).
 3. Ada jeda antar pengiriman (`WA_SEND_DELAY_MS`, default 4 detik) untuk
    mengurangi risiko nomor WA di-flag/dibatasi karena mengirim terlalu cepat.
 4. Kalau gagal (WA belum terhubung, nomor tidak valid, dll), status ditandai
