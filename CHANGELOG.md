@@ -51,6 +51,22 @@ Untuk detail per-commit, lihat `git log`.
 - `scripts/toggle-turnstile.sh on|off` — cara aman menonaktifkan Turnstile
   sementara (utk testing lewat curl/skrip) tanpa menyentuh site/secret key
   asli di `.env`.
+- **Audit keamanan input form registrasi:**
+  - Fix stored-XSS: hasil pencarian walk-in di halaman scan dirender pakai
+    `innerHTML` tanpa escaping — nama peserta yang berisi `<script>` bisa
+    tereksekusi di browser petugas saat dicari. Diganti pakai
+    `textContent`/`createElement`.
+  - Nomor HP kini divalidasi ketat hanya angka (8-15 digit, boleh `+` di
+    depan), menolak huruf/simbol/markup — sebelumnya cuma dicek panjang
+    minimal tanpa cek karakter.
+  - CSV export (daftar peserta & laporan) dinetralkan dari formula
+    injection (`=`, `+`, `-`, `@` di awal sel diberi prefix kutip) —
+    mencegah payload berbahaya tereksekusi kalau file dibuka di Excel.
+  - Nama/institusi/email dibatasi panjang maksimalnya (services/validators.js,
+    dipakai bersama oleh registrasi publik, tambah manual, dan edit admin).
+  - Dikonfirmasi SQL injection bukan risiko — seluruh query pakai
+    parameterized statement (`better-sqlite3`), tidak ada string
+    concatenation dari input user ke SQL.
 
 ## Operasional server (perubahan langsung di server, di luar git)
 
