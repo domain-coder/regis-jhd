@@ -163,7 +163,18 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'list-group-item list-group-item-action d-flex justify-content-between';
-        btn.innerHTML = `<span>${p.nama} — ${p.no_hp}</span>` + (p.sudah_absen ? '<span class="badge bg-danger">Sudah absen</span>' : '');
+
+        const label = document.createElement('span');
+        label.textContent = `${p.nama} — ${p.no_hp}`;
+        btn.appendChild(label);
+
+        if (p.sudah_absen) {
+          const badge = document.createElement('span');
+          badge.className = 'badge bg-danger';
+          badge.textContent = 'Sudah absen';
+          btn.appendChild(badge);
+        }
+
         btn.addEventListener('click', async () => {
           if (!sesiSelect.value) {
             showResult({ status: 'gagal', message: 'Pilih sesi terlebih dahulu.' });
