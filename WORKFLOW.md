@@ -11,7 +11,6 @@ lihat `README.md`. Untuk riwayat perubahan, lihat `CHANGELOG.md`.
 | **Calon peserta** | Mengisi form registrasi (online maupun on-the-spot di venue) |
 | **Panitia (admin_event/super_admin)** | Kelola event/ruangan/sesi/peserta, input walk-in & impor CSV, lihat laporan |
 | **Petugas absensi (petugas)** | Scan QR / cari manual di meja registrasi tiap sesi |
-| **Hermes** | Sistem eksternal yang menarik (pull) data peserta pending dari API untuk mengirim QR via WhatsApp — di luar sistem ini, lihat README bagian integrasi Hermes |
 
 ## Alur keseluruhan
 
@@ -24,9 +23,9 @@ flowchart TD
 
     DB --> QR["Generate QR unik per peserta"]
     QR --> Konfirmasi["Halaman konfirmasi\n(tampilkan QR langsung, fallback)"]
-    QR --> Antrian["Antrian status_kirim_qr = pending"]
-    Antrian -. "Hermes pull tiap X menit" .-> WA["Kirim QR via WhatsApp"]
-    WA -. "callback status" .-> DB
+    QR -. "trigger instan (fire-and-forget)" .-> WA["Kirim QR via WhatsApp (Baileys)"]
+    WA -. "update status sent/failed" .-> DB
+    DB -. "sweep berkala: retry yang masih pending" .-> WA
 
     DB --> Absensi["Petugas: scan QR / cari manual\ndi meja tiap sesi"]
     Absensi --> Laporan["Laporan: rekap per sesi\n& rekap per peserta"]
@@ -52,8 +51,10 @@ sebelum event berlangsung.
    lalu generate QR code unik.
 6. Peserta diarahkan ke **halaman konfirmasi** yang menampilkan QR langsung
    (fallback kalau WA belum sempat terkirim) beserta daftar sesi yang diikuti.
-7. Peserta masuk **antrian Hermes** (`status_kirim_qr = pending`) — Hermes
-   akan menariknya secara berkala dan mengirim QR via WhatsApp.
+7. Sistem langsung mencoba kirim QR via WhatsApp saat itu juga (hampir instan),
+   tanpa menunggu/menghambat langkah #6 di atas. Kalau gagal (jaringan/WA
+   bermasalah), status ditandai `pending`/`failed` dan akan dicoba ulang oleh
+   sweep berkala.
 
 **Ditolak jika:** sesi penuh, sesi bentrok waktu dengan sesi lain yang dipilih,
 no. HP sudah terdaftar di event ini (cegah duplikasi), consent tidak dicentang,
@@ -89,8 +90,8 @@ berombongan kecil dan lebih cepat dibantu panitia langsung.
 4. Centang konfirmasi persetujuan data pribadi **atas nama peserta**
    (panitia menyatakan sudah mendapat persetujuan lisan/tertulis dari
    peserta yang bersangkutan).
-5. Simpan → peserta langsung masuk ke sistem dengan QR ter-generate dan
-   masuk antrian Hermes, sama seperti registrasi mandiri.
+5. Simpan → peserta langsung masuk ke sistem dengan QR ter-generate, dan WA
+   langsung dicoba dikirim saat itu juga, sama seperti registrasi mandiri.
 6. Panitia bisa langsung membuka **"Lihat QR"** peserta itu dari
    `/admin/peserta` untuk ditunjukkan/di-scan di tempat kalau peserta mau
    langsung ikut sesi saat itu juga, tanpa menunggu WA terkirim.
@@ -137,8 +138,10 @@ Budi Santoso,081234567892,budi@mail.com,,"Seminar SAFEnet Triwulan II 2026: Situ
    hasil akhir menampilkan ringkasan "N peserta berhasil diimpor" plus
    daftar baris yang gagal beserta alasannya (mis. "Baris 4: sesi tidak
    ditemukan", "Baris 7: sudah penuh").
-4. Peserta yang berhasil diimpor otomatis masuk antrian Hermes seperti
-   biasa — QR dikirim ke masing-masing no. HP di CSV.
+4. Peserta yang berhasil diimpor akan dikirimi QR via WhatsApp lewat sweep
+   berkala (bukan trigger instan seperti registrasi tunggal — sengaja
+   dijeda satu-satu untuk hindari lonjakan kirim WA beruntun kalau CSV-nya
+   berisi banyak baris sekaligus).
 
 ---
 
@@ -184,7 +187,7 @@ termasuk real-time selama event berlangsung.
    abu-abu).
 
 Selain itu, dashboard admin (`/admin`) menampilkan ringkasan cepat: total
-sesi, total peserta terdaftar, dan jumlah antrian QR yang belum diambil Hermes.
+sesi, total peserta terdaftar, dan jumlah antrian QR yang belum terkirim via WA.
 
 ---
 

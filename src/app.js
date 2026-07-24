@@ -11,12 +11,13 @@ const adminSesiRoutes = require('./routes/admin/sesi');
 const adminPesertaRoutes = require('./routes/admin/peserta');
 const adminLaporanRoutes = require('./routes/admin/laporan');
 const adminUsersRoutes = require('./routes/admin/users');
-const hermesRoutes = require('./routes/hermes');
 const absensiRoutes = require('./routes/absensi');
 const { requireAuth } = require('./middleware/auth');
 const eventModel = require('./models/eventModel');
 const sesiModel = require('./models/sesiModel');
 const pesertaModel = require('./models/pesertaModel');
+const whatsapp = require('./services/whatsapp');
+const pengirimanWa = require('./services/pengirimanWa');
 
 const app = express();
 
@@ -64,7 +65,7 @@ app.get('/admin', requireAuth, (req, res) => {
   const stats = {
     totalSesi: sesiList.length,
     totalPeserta: pesertaModel.list({ eventId: event.id }).length,
-    antrianHermes: pesertaModel.pendingQueue().length,
+    antrianKirimWa: pesertaModel.pendingQueue().length,
   };
   res.render('admin/dashboard', { title: 'Dashboard', event, stats });
 });
@@ -75,7 +76,6 @@ app.use('/admin', requireAuth, adminSesiRoutes);
 app.use('/admin', requireAuth, adminPesertaRoutes);
 app.use('/admin', requireAuth, adminLaporanRoutes);
 app.use('/admin', requireAuth, adminUsersRoutes);
-app.use('/api/hermes', hermesRoutes);
 app.use('/', absensiRoutes);
 
 app.use((req, res) => {
@@ -93,3 +93,10 @@ app.use((err, req, res, next) => {
 app.listen(env.port, () => {
   console.log(`JHD26 app berjalan di http://localhost:${env.port}`);
 });
+
+// Koneksi WA dimulai di background — server tetap menerima request HTTP
+// walau WhatsApp masih connecting/pairing. Sweep berkala jadi jaring
+// pengaman untuk peserta yang gagal ter-trigger instan (mis. saat app baru
+// restart) dan untuk hasil impor CSV massal.
+whatsapp.connect().catch((err) => console.error('[WA] Gagal konek:', err.message));
+pengirimanWa.mulaiSweepBerkala();

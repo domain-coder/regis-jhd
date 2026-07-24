@@ -17,13 +17,4 @@ function requireRole(...roles) {
   };
 }
 
-function requireApiKey(req, res, next) {
-  const env = require('../config/env');
-  const key = req.header('X-API-Key');
-  if (!key || key !== env.hermesApiKey) {
-    return res.status(401).json({ error: 'Unauthorized: X-API-Key tidak valid' });
-  }
-  next();
-}
-
-module.exports = { requireAuth, requireRole, requireApiKey };
+module.exports = { requireAuth, requireRole };

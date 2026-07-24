@@ -3,6 +3,29 @@
 Catatan aktivitas pengembangan & operasional sistem JHD26 Registrasi & Absensi.
 Untuk detail per-commit, lihat `git log`.
 
+## 2026-07-24 — Perubahan arsitektur: kirim WA langsung (tanpa Hermes)
+
+**Keputusan produk:** integrasi WhatsApp yang semula dirancang model *pull*
+lewat sistem eksternal "Hermes" (lihat PRD/master-prompt) diganti total —
+sistem ini sekarang mengirim WA langsung, dikelola dari server yang sama.
+
+- Endpoint `GET /api/hermes/queue` dan `POST /api/hermes/callback` **dihapus**
+  (bukan lagi bagian dari sistem ini).
+- `@whiskeysockets/baileys` (WhatsApp Web multi-device, tidak resmi dari Meta)
+  digabung langsung ke proses aplikasi utama (`src/services/whatsapp.js`,
+  `src/services/pengirimanWa.js`) — bukan proses/repo terpisah.
+- Pola kirim: **trigger instan** (fire-and-forget) begitu registrasi sukses,
+  supaya peserta dapat WA dalam hitungan detik, TANPA pernah menunda atau
+  menggagalkan proses registrasi (prinsip non-fungsional dari PRD tetap
+  dipertahankan meski arsitekturnya berubah). **Sweep berkala** (default tiap
+  1 menit) jadi jaring pengaman untuk kasus trigger gagal & hasil impor CSV
+  massal (yang sengaja tidak di-trigger satu-satu).
+- Pairing pakai kode 8 karakter (bukan scan QR) — cocok untuk server headless,
+  lihat README bagian "Pengiriman WhatsApp".
+- Sempat dibangun sebagai proyek terpisah (`hermes-gateway`, repo GitHub
+  tersendiri) sebelum diputuskan untuk digabung jadi satu proses — repo
+  tersebut sudah dihapus.
+
 ## 2026-07-23 — Build awal
 
 - Implementasi awal lengkap sesuai `master-prompt.txt`: auth & role

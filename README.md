@@ -12,6 +12,7 @@ Lihat `master-prompt.txt` dan PRD terkait untuk detail requirement lengkap,
 - SQLite (`better-sqlite3`) — satu file database, tanpa server DB terpisah
 - EJS (server-rendered) + vanilla JS pada halaman scan
 - `qrcode` untuk generate QR, `html5-qrcode` (via CDN) untuk scan dari browser HP
+- `@whiskeysockets/baileys` untuk kirim QR via WhatsApp langsung dari aplikasi
 - Session-based auth (`express-session`, in-memory store) + `bcrypt`
 - PWA installable (web app manifest + service worker ringan) — lihat bagian PWA di bawah
 
@@ -46,8 +47,9 @@ cp .env.example .env
 
 Edit `.env` dan isi:
 - `SESSION_SECRET` — string acak panjang (mis. `openssl rand -hex 32`)
-- `HERMES_API_KEY` — API key acak untuk autentikasi Hermes (mis. `openssl rand -hex 24`)
 - `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD` — akun super_admin pertama (**wajib diganti** setelah instalasi awal)
+- `WA_PHONE_NUMBER` — nomor WA untuk pairing pertama kali (lihat bagian
+  **Pengiriman WhatsApp** di bawah); boleh dikosongkan dulu kalau belum siap pairing
 
 ### 4. Migrasi & seed data
 
@@ -101,10 +103,11 @@ mengganti branding: `convert -background none icon.svg -resize 512x512 icon-512.
 
 1. **Registrasi**: peserta mengisi form di `/register`, pilih 1+ sesi (kapasitas
    divalidasi real-time terhadap kapasitas ruangan). Setelah sukses, halaman
-   konfirmasi menampilkan QR code langsung (fallback jika Hermes belum sempat kirim WA).
-2. **Distribusi QR via Hermes**: Hermes memanggil `GET /api/hermes/queue` secara
-   berkala untuk mengambil data peserta berstatus `pending`, mengirim WA sendiri,
-   lalu melapor via `POST /api/hermes/callback`.
+   konfirmasi menampilkan QR code langsung (fallback jika WA belum sempat terkirim).
+2. **Distribusi QR via WhatsApp**: begitu registrasi sukses, sistem langsung mengirim
+   QR via WhatsApp (Baileys) secara asinkron — tidak menunda/menggagalkan registrasi
+   kalau pengiriman WA lambat/gagal. Ada sweep berkala sebagai jaring pengaman untuk
+   peserta yang belum terkirim (lihat bagian **Pengiriman WhatsApp** di bawah).
 3. **Absensi**: petugas login → buka `/absensi/scan` → pilih sesi aktif → scan QR
    peserta dari kamera HP (atau cari manual untuk walk-in).
 4. **Laporan**: admin melihat rekap pendaftar/kehadiran per sesi dan per peserta di
@@ -118,43 +121,53 @@ mengganti branding: `convert -background none icon.svg -resize 512x512 icon-512.
 | `admin_event` | Event, ruangan, sesi, peserta, laporan, absensi (tanpa manajemen user) |
 | `petugas` | Halaman scan/absensi saja |
 
-## Integrasi Hermes (untuk diteruskan ke tim Hermes)
+## Pengiriman WhatsApp (Baileys)
 
-Autentikasi: header `X-API-Key: <HERMES_API_KEY dari .env>` pada setiap request.
+QR code dikirim ke peserta via WhatsApp menggunakan
+[Baileys](https://github.com/WhiskeySockets/Baileys) — dijalankan langsung di
+dalam proses aplikasi ini (`src/services/whatsapp.js` + `src/services/pengirimanWa.js`),
+bukan sistem/proses terpisah.
 
-### `GET /api/hermes/queue`
+**Cara kerja:**
+1. Begitu registrasi sukses (dari form publik, tambah manual admin, atau resend),
+   sistem langsung mencoba kirim WA saat itu juga (*fire-and-forget* — tidak
+   ditunggu, tidak bisa menggagalkan/menunda registrasi).
+2. Ada sweep berkala (`WA_POLL_INTERVAL_MS`, default 1 menit) yang memproses ulang
+   peserta berstatus `pending` sebagai jaring pengaman — menangkap kasus trigger
+   instan gagal (mis. app baru restart) dan hasil impor CSV massal (yang sengaja
+   tidak di-trigger satu-satu, supaya tidak ada lonjakan kirim beruntun).
+3. Ada jeda antar pengiriman (`WA_SEND_DELAY_MS`, default 4 detik) untuk
+   mengurangi risiko nomor WA di-flag/dibatasi karena mengirim terlalu cepat.
+4. Kalau gagal (WA belum terhubung, nomor tidak valid, dll), status ditandai
+   `failed` dengan keterangan error — admin bisa klik **"Kirim Ulang"** di
+   `/admin/peserta` untuk mencoba lagi.
 
-Mengembalikan daftar peserta dengan status pengiriman QR = `pending`.
+### Pairing Pertama Kali
 
-```json
-{
-  "data": [
-    {
-      "peserta_id": 12,
-      "nama": "Budi Santoso",
-      "no_hp": "6281234567890",
-      "sesi": [
-        { "nama": "Sesi Pembukaan", "waktu_mulai": "2026-08-10T08:00:00", "ruangan": "R1" }
-      ],
-      "qr_token": "a1b2c3d4-...",
-      "qr_image_base64": "data:image/png;base64,...."
-    }
-  ]
-}
-```
+Baileys butuh nomor WA yang di-*link* seperti WhatsApp Web (linked device),
+lewat **kode pairing** (bukan scan QR — lebih praktis untuk server headless):
 
-- `no_hp` sudah dinormalisasi ke format `62xxxxxxxxxx` (tanpa `+`, tanpa `0` di depan).
-- `qr_image_base64` digenerate on-the-fly per request (tidak disimpan di disk).
+1. Isi `WA_PHONE_NUMBER` di `.env` (format `62xxxxxxxxxx`, tanpa `+`).
+2. Restart aplikasi (`pm2 restart jhd26-registrasi-absensi`).
+3. Setelah beberapa detik, **kode pairing 8 karakter** muncul di log
+   (`pm2 logs jhd26-registrasi-absensi`).
+4. Di HP nomor tersebut: WhatsApp → **Pengaturan** → **Perangkat Tertaut** →
+   **Tautkan dengan nomor telepon** → masukkan kode tersebut.
+5. Setelah berhasil, sesi tersimpan di `data/wa-auth/` (gitignored) — tidak perlu
+   pairing ulang lagi selama folder itu tidak dihapus dan tidak logout dari HP.
+   `WA_PHONE_NUMBER` boleh dikosongkan setelah ini.
 
-### `POST /api/hermes/callback`
+### ⚠️ Catatan Baileys
 
-Body:
-```json
-{ "peserta_id": 12, "status": "sent", "keterangan": "opsional, mis. pesan error" }
-```
-
-`status` harus `sent` atau `failed`. Field/skema ini adalah **asumsi awal** —
-kontrak persis dengan Hermes belum final, silakan koordinasikan perubahan jika perlu.
+Baileys **bukan API resmi WhatsApp** — meniru protokol WhatsApp Web, tidak
+didukung resmi oleh Meta. Untuk skala kecil (~200 pesan/event) risikonya rendah,
+tapi tetap perhatikan:
+- Jangan turunkan `WA_SEND_DELAY_MS` terlalu rendah untuk volume besar (risiko
+  nomor di-flag/restricted).
+- Sebaiknya pakai nomor yang memang didedikasikan untuk event ini, bukan nomor
+  pribadi utama panitia.
+- Kalau WhatsApp di HP melakukan "Hapus semua perangkat tertaut", perlu
+  pairing ulang dari awal (hapus `data/wa-auth/`, isi `WA_PHONE_NUMBER` lagi).
 
 ## Deployment
 
@@ -174,7 +187,7 @@ Contoh konfigurasi tersedia sebagai referensi (tidak dijalankan otomatis):
   (`db.transaction(...).immediate()` di better-sqlite3) untuk mencegah overbooking
   saat beberapa peserta mendaftar bersamaan ke sesi yang hampir penuh.
 - **QR code**: tidak pernah disimpan sebagai file — selalu digenerate on-the-fly
-  dari `qr_token` (UUID v4), baik di halaman konfirmasi maupun endpoint Hermes.
+  dari `qr_token` (UUID v4), baik di halaman konfirmasi maupun saat dikirim WA.
 - **npm audit**: beberapa advisory pada dependency `tar` (transitif dari
   `node-gyp`/`node-pre-gyp`, dipakai saat compile native module `bcrypt`/
   `better-sqlite3`) tidak dapat di-fix tanpa downgrade breaking. Advisory ini

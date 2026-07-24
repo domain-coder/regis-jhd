@@ -11,6 +11,7 @@ const { labelSesi } = require('../../services/tanggal');
 const { generateQrDataUrl } = require('../../services/qr');
 const { sanitizeCsvRow } = require('../../services/csvSafe');
 const { namaSchema, noHpSchema, emailSchema, institusiSchema } = require('../../services/validators');
+const { triggerKirim } = require('../../services/pengirimanWa');
 const { requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -83,7 +84,7 @@ router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) =>
     });
   }
   try {
-    pesertaModel.register(event.id, {
+    const peserta = pesertaModel.register(event.id, {
       nama: parsed.data.nama,
       no_hp: parsed.data.no_hp,
       email: parsed.data.email,
@@ -91,6 +92,7 @@ router.post('/peserta', requireRole('super_admin', 'admin_event'), (req, res) =>
       sesi_ids: parsed.data.sesi_id,
       consent: parsed.data.consent,
     });
+    triggerKirim(peserta.id);
     res.redirect('/admin/peserta');
   } catch (err) {
     if (
@@ -212,6 +214,10 @@ router.post(
         continue;
       }
       try {
+        // Tidak trigger kirim instan per-baris di sini (beda dari registrasi
+        // tunggal) — impor bisa berisi banyak baris sekaligus, jadi biar
+        // sweep berkala (pengirimanWa.mulaiSweepBerkala) yang memprosesnya
+        // satu-satu dengan jeda, menghindari lonjakan kirim WA beruntun.
         pesertaModel.register(event.id, {
           nama: row.nama,
           no_hp: row.no_hp,
@@ -264,6 +270,7 @@ router.post('/peserta/:id/hapus', requireRole('super_admin', 'admin_event'), (re
 
 router.post('/peserta/:id/resend-qr', requireRole('super_admin', 'admin_event'), (req, res) => {
   pesertaModel.markResend(req.params.id);
+  triggerKirim(Number(req.params.id));
   res.redirect('/admin/peserta');
 });
 

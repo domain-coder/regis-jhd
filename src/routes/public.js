@@ -7,6 +7,7 @@ const { generateQrDataUrl } = require('../services/qr');
 const { labelSesi } = require('../services/tanggal');
 const { verifyTurnstile } = require('../services/turnstile');
 const { namaSchema, noHpSchema, emailSchema, institusiSchema } = require('../services/validators');
+const { triggerKirim } = require('../services/pengirimanWa');
 const env = require('../config/env');
 
 const router = express.Router();
@@ -89,6 +90,7 @@ router.post('/api/public/register', async (req, res) => {
       sesi_ids: parsed.data.sesi_id,
       consent: parsed.data.consent,
     });
+    triggerKirim(peserta.id);
     res.redirect(`/register/konfirmasi/${peserta.qr_token}`);
   } catch (err) {
     if (
