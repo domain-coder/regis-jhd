@@ -6,19 +6,29 @@
   <form method="post" action="/admin/peserta">
     <div class="mb-3">
       <label class="form-label">Nama</label>
-      <input type="text" name="nama" class="form-control" value="<%= form.nama || '' %>" required>
+      <input type="text" name="nama" class="form-control" value="<%= form.nama || '' %>" maxlength="150" required>
     </div>
     <div class="mb-3">
       <label class="form-label">No. HP/WA</label>
-      <input type="text" name="no_hp" class="form-control" value="<%= form.no_hp || '' %>" required>
+      <input
+        type="tel"
+        name="no_hp"
+        class="form-control"
+        value="<%= form.no_hp || '' %>"
+        inputmode="numeric"
+        pattern="[0-9\s-]{8,20}"
+        title="Hanya angka, 8-15 digit"
+        maxlength="20"
+        required
+      >
     </div>
     <div class="mb-3">
       <label class="form-label">Email (opsional)</label>
-      <input type="email" name="email" class="form-control" value="<%= form.email || '' %>">
+      <input type="email" name="email" class="form-control" value="<%= form.email || '' %>" maxlength="200">
     </div>
     <div class="mb-3">
       <label class="form-label">Institusi (opsional)</label>
-      <input type="text" name="institusi" class="form-control" value="<%= form.institusi || '' %>">
+      <input type="text" name="institusi" class="form-control" value="<%= form.institusi || '' %>" maxlength="200">
     </div>
     <label class="form-label">Sesi (boleh lebih dari satu, selama waktunya tidak bentrok)</label>
     <%- include('../../partials/sesi-picker', { sesiList }) %>

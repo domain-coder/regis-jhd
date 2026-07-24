@@ -9,7 +9,7 @@
   <form method="post" action="/admin/peserta/<%= peserta.id %>">
     <div class="mb-3">
       <label class="form-label">Nama</label>
-      <input type="text" name="nama" class="form-control" value="<%= peserta.nama %>" required>
+      <input type="text" name="nama" class="form-control" value="<%= peserta.nama %>" maxlength="150" required>
     </div>
     <div class="mb-3">
       <label class="form-label">No. HP/WA</label>
@@ -18,11 +18,11 @@
     </div>
     <div class="mb-3">
       <label class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" value="<%= peserta.email || '' %>">
+      <input type="email" name="email" class="form-control" value="<%= peserta.email || '' %>" maxlength="200">
     </div>
     <div class="mb-3">
       <label class="form-label">Institusi</label>
-      <input type="text" name="institusi" class="form-control" value="<%= peserta.institusi || '' %>">
+      <input type="text" name="institusi" class="form-control" value="<%= peserta.institusi || '' %>" maxlength="200">
     </div>
     <button type="submit" class="btn btn-primary">Simpan</button>
     <a href="/admin/peserta" class="btn btn-link">Kembali</a>

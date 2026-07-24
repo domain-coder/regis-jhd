@@ -6,6 +6,7 @@ const pesertaModel = require('../models/pesertaModel');
 const { generateQrDataUrl } = require('../services/qr');
 const { labelSesi } = require('../services/tanggal');
 const { verifyTurnstile } = require('../services/turnstile');
+const { namaSchema, noHpSchema, emailSchema, institusiSchema } = require('../services/validators');
 const env = require('../config/env');
 
 const router = express.Router();
@@ -40,10 +41,10 @@ router.get('/api/public/sesi', (req, res) => {
 });
 
 const registerSchema = z.object({
-  nama: z.string().trim().min(1, 'Nama wajib diisi'),
-  no_hp: z.string().trim().min(8, 'Nomor HP tidak valid'),
-  email: z.string().trim().email('Email tidak valid').optional().or(z.literal('')),
-  institusi: z.string().trim().optional(),
+  nama: namaSchema,
+  no_hp: noHpSchema,
+  email: emailSchema,
+  institusi: institusiSchema,
   sesi_id: z
     .preprocess((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]), z.array(z.string()))
     .refine((arr) => arr.length > 0, 'Pilih minimal satu sesi')

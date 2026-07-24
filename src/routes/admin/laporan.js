@@ -2,6 +2,7 @@ const express = require('express');
 const { stringify } = require('csv-stringify/sync');
 const eventModel = require('../../models/eventModel');
 const laporanModel = require('../../models/laporanModel');
+const { sanitizeCsvRow } = require('../../services/csvSafe');
 const { requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -22,7 +23,7 @@ router.get('/laporan/export', requireRole('super_admin', 'admin_event'), (req, r
   let csv;
   if (jenis === 'sesi') {
     csv = stringify(
-      laporanModel.rekapSesi(event.id).map((s) => ({
+      laporanModel.rekapSesi(event.id).map((s) => sanitizeCsvRow({
         sesi: s.nama,
         ruangan: s.ruangan_nama,
         kapasitas: s.kapasitas,
@@ -35,7 +36,7 @@ router.get('/laporan/export', requireRole('super_admin', 'admin_event'), (req, r
     );
   } else {
     csv = stringify(
-      laporanModel.rekapPeserta(event.id).map((p) => ({
+      laporanModel.rekapPeserta(event.id).map((p) => sanitizeCsvRow({
         nama: p.nama,
         no_hp: p.no_hp,
         sesi_diikuti: p.sesi.map((s) => s.nama).join(', '),

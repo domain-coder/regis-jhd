@@ -9,6 +9,8 @@ const sesiModel = require('../../models/sesiModel');
 const pesertaModel = require('../../models/pesertaModel');
 const { labelSesi } = require('../../services/tanggal');
 const { generateQrDataUrl } = require('../../services/qr');
+const { sanitizeCsvRow } = require('../../services/csvSafe');
+const { namaSchema, noHpSchema, emailSchema, institusiSchema } = require('../../services/validators');
 const { requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -54,10 +56,10 @@ router.get('/peserta/tambah', requireRole('super_admin', 'admin_event'), (req, r
 });
 
 const manualSchema = z.object({
-  nama: z.string().trim().min(1, 'Nama wajib diisi'),
-  no_hp: z.string().trim().min(8, 'Nomor HP tidak valid'),
-  email: z.string().trim().email('Email tidak valid').optional().or(z.literal('')),
-  institusi: z.string().trim().optional(),
+  nama: namaSchema,
+  no_hp: noHpSchema,
+  email: emailSchema,
+  institusi: institusiSchema,
   sesi_id: z
     .preprocess((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]), z.array(z.string()))
     .refine((arr) => arr.length > 0, 'Pilih minimal satu sesi')
@@ -116,7 +118,7 @@ router.get('/peserta/export', requireRole('super_admin', 'admin_event'), (req, r
     .map((p) => ({ ...p, sesiList: pesertaModel.sesiUntukPeserta(p.id) }));
 
   const csv = stringify(
-    pesertaList.map((p) => ({
+    pesertaList.map((p) => sanitizeCsvRow({
       id: p.id,
       nama: p.nama,
       no_hp: p.no_hp,
@@ -151,9 +153,9 @@ router.get('/peserta/:id/edit', requireRole('super_admin', 'admin_event'), (req,
 });
 
 const editSchema = z.object({
-  nama: z.string().trim().min(1, 'Nama wajib diisi'),
-  email: z.string().trim().email('Email tidak valid').optional().or(z.literal('')),
-  institusi: z.string().trim().optional(),
+  nama: namaSchema,
+  email: emailSchema,
+  institusi: institusiSchema,
 });
 
 router.post(
