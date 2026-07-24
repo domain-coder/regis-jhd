@@ -5,7 +5,9 @@ function rekapSesi(eventId) {
     .prepare(
       `SELECT
          sesi.id, sesi.nama, ruangan.nama AS ruangan_nama, ruangan.kapasitas,
-         (SELECT COUNT(*) FROM peserta_sesi WHERE peserta_sesi.sesi_id = sesi.id) AS jumlah_daftar,
+         (SELECT COUNT(*) FROM peserta_sesi
+          JOIN peserta ON peserta.id = peserta_sesi.peserta_id
+          WHERE peserta_sesi.sesi_id = sesi.id AND peserta.nonaktif_at IS NULL) AS jumlah_daftar,
          (SELECT COUNT(*) FROM kehadiran WHERE kehadiran.sesi_id = sesi.id) AS jumlah_hadir
        FROM sesi
        JOIN ruangan ON ruangan.id = sesi.ruangan_id

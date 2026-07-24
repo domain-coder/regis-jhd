@@ -15,6 +15,10 @@ function findById(id) {
   return db.prepare('SELECT * FROM peserta WHERE id = ?').get(id);
 }
 
+function findByNoHp(eventId, noHp) {
+  return db.prepare('SELECT * FROM peserta WHERE event_id = ? AND no_hp = ?').get(eventId, noHp);
+}
+
 function isTerdaftarDiSesi(pesertaId, sesiId) {
   return !!db
     .prepare('SELECT 1 FROM peserta_sesi WHERE peserta_id = ? AND sesi_id = ?')
@@ -53,7 +57,9 @@ const _registerTx = db.transaction((eventId, data) => {
     const sesi = db
       .prepare(
         `SELECT sesi.id, sesi.nama, sesi.waktu_mulai, sesi.waktu_selesai, ruangan.kapasitas,
-                (SELECT COUNT(*) FROM peserta_sesi WHERE sesi_id = sesi.id) AS jumlah_daftar
+                (SELECT COUNT(*) FROM peserta_sesi
+                 JOIN peserta ON peserta.id = peserta_sesi.peserta_id
+                 WHERE peserta_sesi.sesi_id = sesi.id AND peserta.nonaktif_at IS NULL) AS jumlah_daftar
          FROM sesi JOIN ruangan ON ruangan.id = sesi.ruangan_id
          WHERE sesi.id = ?`
       )
@@ -100,13 +106,16 @@ function register(eventId, data) {
   return _registerTx.immediate(eventId, data);
 }
 
-function list({ eventId, sesiId, q }) {
+function list({ eventId, sesiId, q, hanyaAktif }) {
   let sql = `
     SELECT DISTINCT peserta.* FROM peserta
     LEFT JOIN peserta_sesi ON peserta_sesi.peserta_id = peserta.id
     WHERE peserta.event_id = ?
   `;
   const params = [eventId];
+  if (hanyaAktif) {
+    sql += ' AND peserta.nonaktif_at IS NULL';
+  }
   if (sesiId) {
     sql += ' AND peserta_sesi.sesi_id = ?';
     params.push(sesiId);
@@ -135,6 +144,16 @@ function remove(id) {
   db.prepare('DELETE FROM peserta WHERE id = ?').run(id);
 }
 
+function nonaktifkan(id, catatan) {
+  db.prepare(
+    "UPDATE peserta SET nonaktif_at = datetime('now'), catatan_nonaktif = ? WHERE id = ?"
+  ).run(catatan || null, id);
+}
+
+function reaktivasi(id) {
+  db.prepare('UPDATE peserta SET nonaktif_at = NULL, catatan_nonaktif = NULL WHERE id = ?').run(id);
+}
+
 function markResend(id) {
   db.prepare("UPDATE peserta SET status_kirim_qr = 'pending', catatan_kirim = NULL WHERE id = ?").run(id);
 }
@@ -158,12 +177,15 @@ module.exports = {
   ConsentError,
   findByToken,
   findById,
+  findByNoHp,
   isTerdaftarDiSesi,
   sesiUntukPeserta,
   register,
   list,
   update,
   remove,
+  nonaktifkan,
+  reaktivasi,
   markResend,
   pendingQueue,
   updateStatusKirim,

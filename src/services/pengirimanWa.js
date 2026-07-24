@@ -19,7 +19,9 @@ function formatPesan(peserta, sesiList) {
     `Berikut QR code Anda untuk absensi. Mohon simpan pesan ini dan ` +
     `tunjukkan QR ke petugas saat masuk sesi.\n\n` +
     `📅 Sesi yang diikuti:\n${daftarSesi}\n\n` +
-    `Sampai jumpa di acara! 🎉`
+    `Sampai jumpa di acara! 🎉\n\n` +
+    `_Jika Anda tidak merasa melakukan registrasi ini, balas pesan ini kapan saja ` +
+    `untuk membatalkan otomatis (kuota sesi akan dibebaskan)._`
   );
 }
 
@@ -33,7 +35,7 @@ async function kirimKePeserta(pesertaId) {
 
   try {
     const peserta = pesertaModel.findById(pesertaId);
-    if (!peserta || peserta.status_kirim_qr !== 'pending') return;
+    if (!peserta || peserta.status_kirim_qr !== 'pending' || peserta.nonaktif_at) return;
 
     const sesiList = pesertaModel.sesiUntukPeserta(pesertaId);
     const qrDataUrl = await generateQrDataUrl(peserta.qr_token);

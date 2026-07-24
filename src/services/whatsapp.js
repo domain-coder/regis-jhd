@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { EventEmitter } = require('events');
 const pino = require('pino');
 const { Boom } = require('@hapi/boom');
 const {
@@ -10,6 +11,7 @@ const {
 const env = require('../config/env');
 
 const logger = pino({ level: 'warn' });
+const emitter = new EventEmitter();
 
 let sock = null;
 let readyPromise = null;
@@ -24,6 +26,21 @@ function connect() {
 
     sock = makeWASocket({ version, auth: state, logger, printQRInTerminal: false });
     sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('messages.upsert', ({ messages, type }) => {
+      if (type !== 'notify') return;
+      for (const msg of messages) {
+        if (msg.key.fromMe) continue;
+        const jid = msg.key.remoteJid || '';
+        if (!jid.endsWith('@s.whatsapp.net')) continue; // abaikan grup/broadcast
+        const noHp = jid.split('@')[0];
+        const text =
+          msg.message?.conversation ||
+          msg.message?.extendedTextMessage?.text ||
+          '';
+        if (text) emitter.emit('pesanMasuk', { noHp, text });
+      }
+    });
 
     return new Promise((resolve) => {
       sock.ev.on('connection.update', (update) => {
@@ -86,4 +103,10 @@ async function sendQr(noHp, caption, qrImageBase64) {
   await sock.sendMessage(jid, { image: buffer, caption });
 }
 
-module.exports = { connect, sendQr };
+async function kirimTeks(noHp, teks) {
+  await withTimeout(connect(), 30000, 'WhatsApp belum terhubung (timeout 30 detik).');
+  const jid = `${noHp}@s.whatsapp.net`;
+  await sock.sendMessage(jid, { text: teks });
+}
+
+module.exports = { connect, sendQr, kirimTeks, on: emitter.on.bind(emitter) };

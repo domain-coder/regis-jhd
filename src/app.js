@@ -18,6 +18,7 @@ const sesiModel = require('./models/sesiModel');
 const pesertaModel = require('./models/pesertaModel');
 const whatsapp = require('./services/whatsapp');
 const pengirimanWa = require('./services/pengirimanWa');
+const balasanWa = require('./services/balasanWa');
 
 const app = express();
 
@@ -99,4 +100,5 @@ app.listen(env.port, () => {
 // pengaman untuk peserta yang gagal ter-trigger instan (mis. saat app baru
 // restart) dan untuk hasil impor CSV massal.
 whatsapp.connect().catch((err) => console.error('[WA] Gagal konek:', err.message));
+whatsapp.on('pesanMasuk', balasanWa.tanganiBalasan);
 pengirimanWa.mulaiSweepBerkala();

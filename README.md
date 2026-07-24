@@ -145,6 +145,25 @@ bukan sistem/proses terpisah.
    `failed` dengan keterangan error — admin bisa klik **"Kirim Ulang"** di
    `/admin/peserta` untuk mencoba lagi.
 
+### Pembatalan Mandiri via Balasan WA
+
+Setiap pesan QR mencantumkan instruksi: peserta bisa membalas pesan itu kapan
+saja kalau merasa tidak pernah mendaftar. Implementasinya di
+`src/services/balasanWa.js`, di-trigger dari event `messages.upsert` Baileys
+(`src/services/whatsapp.js`):
+
+- Balasan apa pun (tidak ada pengecekan kata kunci) dari nomor yang cocok
+  dengan peserta terdaftar → peserta ditandai **nonaktif** (`nonaktif_at`,
+  **bukan dihapus**), sistem membalas WA konfirmasi.
+- Peserta nonaktif tidak lagi dihitung ke kapasitas sesi (kuota otomatis
+  bebas), QR-nya ditolak saat scan, dan tidak muncul di pencarian walk-in.
+- Balasan dari nomor yang tidak dikenali diabaikan (tidak ada reply, tidak
+  ada perubahan data).
+- Admin bisa **reaktivasi** kapan saja dari `/admin/peserta` kalau balasan
+  ternyata tidak sengaja — semua kembali normal (kuota, QR, kemampuan absen).
+- Admin juga bisa menonaktifkan/reaktivasi manual dari halaman yang sama,
+  tanpa perlu menunggu balasan WA peserta.
+
 ### Pairing Pertama Kali
 
 Baileys butuh nomor WA yang di-*link* seperti WhatsApp Web (linked device),

@@ -128,6 +128,7 @@ router.get('/peserta/export', requireRole('super_admin', 'admin_event'), (req, r
       institusi: p.institusi || '',
       sesi: p.sesiList.map((s) => s.nama).join(', '),
       status_kirim_qr: p.status_kirim_qr,
+      status: p.nonaktif_at ? 'nonaktif' : 'aktif',
       created_at: p.created_at,
     })),
     { header: true }
@@ -271,6 +272,16 @@ router.post('/peserta/:id/hapus', requireRole('super_admin', 'admin_event'), (re
 router.post('/peserta/:id/resend-qr', requireRole('super_admin', 'admin_event'), (req, res) => {
   pesertaModel.markResend(req.params.id);
   triggerKirim(Number(req.params.id));
+  res.redirect('/admin/peserta');
+});
+
+router.post('/peserta/:id/nonaktifkan', requireRole('super_admin', 'admin_event'), (req, res) => {
+  pesertaModel.nonaktifkan(req.params.id, 'Dinonaktifkan manual oleh admin');
+  res.redirect('/admin/peserta');
+});
+
+router.post('/peserta/:id/reaktivasi', requireRole('super_admin', 'admin_event'), (req, res) => {
+  pesertaModel.reaktivasi(req.params.id);
   res.redirect('/admin/peserta');
 });
 

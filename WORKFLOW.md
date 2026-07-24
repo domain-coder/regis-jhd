@@ -172,7 +172,43 @@ sekali untuk seluruh event.
 
 ---
 
-## 6. Pelaporan
+## 6. Pembatalan Mandiri via Balasan WA
+
+Setiap pesan QR yang dikirim mencantumkan instruksi: *"Jika Anda tidak merasa
+melakukan registrasi ini, balas pesan ini kapan saja untuk membatalkan
+otomatis."* Ini jaring pengaman untuk kasus salah nomor HP terdaftar,
+nomor bekas, atau registrasi yang tidak dikenali penerimanya.
+
+**Alur:**
+1. Peserta membalas pesan WA apa pun isinya (sistem tidak mengecek kata
+   kunci tertentu — instruksinya memang "balas apa saja").
+2. Sistem mencocokkan nomor pengirim dengan data peserta di event ini.
+   Kalau tidak cocok (bukan peserta terdaftar), pesan **diabaikan** —
+   tidak ada balasan otomatis, tidak ada perubahan data.
+3. Kalau cocok, peserta itu langsung ditandai **nonaktif** (dicatat
+   waktu & isi balasannya sebagai `catatan_nonaktif`) — **datanya tidak
+   dihapus**, hanya statusnya berubah.
+4. Sistem membalas WA konfirmasi, termasuk cara membatalkan kalau balasan
+   ternyata tidak sengaja (hubungi panitia).
+
+**Efek peserta nonaktif:**
+- Kuota sesi yang diikutinya otomatis dihitung bebas lagi (peserta lain
+  bisa mengisi slot itu) — tapi baris `peserta_sesi` tidak dihapus.
+- QR-nya tidak lagi valid untuk absensi (scan/manual dianggap "tidak
+  terdaftar").
+- Tidak muncul di pencarian walk-in petugas.
+- Tidak lagi dikirimi WA (resend/sweep melewatinya).
+
+**Reaktivasi (kalau balasan ternyata keliru):** panitia buka
+`/admin/peserta`, cari peserta itu (baris ditandai abu-abu, badge
+"Nonaktif"), klik **"Aktifkan Kembali"** — kuota, QR, dan kemampuan
+absen langsung pulih seperti semula. Panitia juga bisa menonaktifkan
+peserta secara manual (tombol "Nonaktifkan") tanpa perlu peserta
+membalas WA lebih dulu, mis. kalau ada laporan lisan di lapangan.
+
+---
+
+## 7. Pelaporan
 
 Panitia (admin_event/super_admin) membuka `/admin/laporan` kapan saja,
 termasuk real-time selama event berlangsung.
@@ -205,3 +241,4 @@ inti yang sama di backend:
 | Persetujuan data pribadi | Wajib, dicatat dengan timestamp (`consent_at`) |
 | Format no. HP | Hanya angka (8-15 digit), dinormalisasi ke `62xxxxxxxxxx` |
 | QR code | Selalu digenerate on-the-fly dari token unik, tidak pernah disimpan sebagai file |
+| Pembatalan via balasan WA | Menonaktifkan (bukan menghapus) peserta — kuota bebas, QR tidak valid, bisa direaktivasi admin |

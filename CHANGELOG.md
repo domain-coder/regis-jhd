@@ -3,6 +3,27 @@
 Catatan aktivitas pengembangan & operasional sistem JHD26 Registrasi & Absensi.
 Untuk detail per-commit, lihat `git log`.
 
+## 2026-07-24 — Pembatalan mandiri via balasan WA
+
+Peserta bisa membalas pesan QR-nya kapan saja untuk membatalkan registrasi
+sendiri (mis. salah nomor terdaftar, atau tidak merasa mendaftar) —
+dijadikan pengaman tambahan atas permintaan langsung.
+
+- Kolom baru `nonaktif_at`/`catatan_nonaktif` di tabel `peserta` (migrasi
+  `003_add_nonaktif.sql`) — **data tidak pernah dihapus**, cuma ditandai.
+- `src/services/balasanWa.js` menangani balasan masuk (event
+  `messages.upsert` dari Baileys): cocokkan nomor pengirim ke peserta di
+  event ini, tandai nonaktif kalau cocok, balas konfirmasi WA. Nomor yang
+  tidak dikenali diabaikan sepenuhnya (tidak ada reply, tidak ada perubahan).
+- Peserta nonaktif otomatis dikecualikan dari hitungan kapasitas sesi
+  (`sesiModel`, `pesertaModel._registerTx`, `laporanModel.rekapSesi`), ditolak
+  saat scan QR (`tidak_terdaftar`), dan tidak muncul di pencarian walk-in
+  petugas (`pesertaModel.list({ hanyaAktif: true })`) — tapi baris
+  `peserta_sesi` tetap utuh untuk audit.
+- Admin bisa nonaktifkan/reaktivasi manual dari `/admin/peserta` (badge
+  status + tombol), tidak harus menunggu balasan WA peserta.
+- Pesan QR yang dikirim sekarang menyertakan instruksi cara membatalkan.
+
 ## 2026-07-24 — Perubahan arsitektur: kirim WA langsung (tanpa Hermes)
 
 **Keputusan produk:** integrasi WhatsApp yang semula dirancang model *pull*

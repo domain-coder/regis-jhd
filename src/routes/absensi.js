@@ -24,6 +24,9 @@ function prosesAbsensi({ peserta, sesiId, dicatatOleh, metode }) {
   if (!peserta) {
     return { status: 'tidak_terdaftar', message: 'QR tidak dikenali / peserta tidak ditemukan.' };
   }
+  if (peserta.nonaktif_at) {
+    return { status: 'tidak_terdaftar', message: `${peserta.nama} sudah menonaktifkan registrasinya.` };
+  }
   if (!pesertaModel.isTerdaftarDiSesi(peserta.id, sesiId)) {
     return { status: 'tidak_terdaftar', message: `${peserta.nama} tidak terdaftar pada sesi ini.` };
   }
@@ -56,7 +59,7 @@ router.get('/api/absensi/cari', requireRole(...petugasRoles), (req, res) => {
     return res.json({ data: [] });
   }
   const hasil = pesertaModel
-    .list({ eventId: event.id, sesiId: sesi_id || null, q })
+    .list({ eventId: event.id, sesiId: sesi_id || null, q, hanyaAktif: true })
     .slice(0, 10)
     .map((p) => ({
       id: p.id,

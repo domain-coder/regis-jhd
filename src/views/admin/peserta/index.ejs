@@ -48,11 +48,11 @@
 
   <table class="table table-bordered bg-white">
     <thead>
-      <tr><th>Nama</th><th>No. HP</th><th>Sesi</th><th>Status QR</th><th></th></tr>
+      <tr><th>Nama</th><th>No. HP</th><th>Sesi</th><th>Status QR</th><th>Status</th><th></th></tr>
     </thead>
     <tbody>
       <% pesertaList.forEach(p => { %>
-        <tr>
+        <tr class="<%= p.nonaktif_at ? 'table-secondary' : '' %>">
           <td><%= p.nama %></td>
           <td><%= p.no_hp %></td>
           <td><%= p.sesiList.map(s => s.nama).join(', ') %></td>
@@ -60,12 +60,28 @@
             <% const badgeClass = { pending: 'bg-secondary', sent: 'bg-success', failed: 'bg-danger' }[p.status_kirim_qr] || 'bg-secondary'; %>
             <span class="badge <%= badgeClass %>"><%= p.status_kirim_qr %></span>
           </td>
+          <td>
+            <% if (p.nonaktif_at) { %>
+              <span class="badge bg-dark" title="<%= p.catatan_nonaktif || '' %>">Nonaktif</span>
+            <% } else { %>
+              <span class="badge bg-success">Aktif</span>
+            <% } %>
+          </td>
           <td class="text-nowrap">
             <a href="/admin/peserta/<%= p.id %>/qr" class="btn btn-sm btn-outline-success">QR</a>
             <a href="/admin/peserta/<%= p.id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
-            <form method="post" action="/admin/peserta/<%= p.id %>/resend-qr" class="d-inline">
-              <button class="btn btn-sm btn-outline-warning" type="submit">Kirim Ulang</button>
-            </form>
+            <% if (p.nonaktif_at) { %>
+              <form method="post" action="/admin/peserta/<%= p.id %>/reaktivasi" class="d-inline">
+                <button class="btn btn-sm btn-outline-success" type="submit">Aktifkan Kembali</button>
+              </form>
+            <% } else { %>
+              <form method="post" action="/admin/peserta/<%= p.id %>/resend-qr" class="d-inline">
+                <button class="btn btn-sm btn-outline-warning" type="submit">Kirim Ulang</button>
+              </form>
+              <form method="post" action="/admin/peserta/<%= p.id %>/nonaktifkan" class="d-inline" onsubmit="return confirm('Nonaktifkan peserta ini? Kuota sesi akan dibebaskan.')">
+                <button class="btn btn-sm btn-outline-dark" type="submit">Nonaktifkan</button>
+              </form>
+            <% } %>
             <form method="post" action="/admin/peserta/<%= p.id %>/hapus" class="d-inline" onsubmit="return confirm('Hapus peserta ini?')">
               <button class="btn btn-sm btn-outline-danger" type="submit">Hapus</button>
             </form>
@@ -73,7 +89,7 @@
         </tr>
       <% }) %>
       <% if (pesertaList.length === 0) { %>
-        <tr><td colspan="5" class="text-center text-muted">Belum ada peserta.</td></tr>
+        <tr><td colspan="6" class="text-center text-muted">Belum ada peserta.</td></tr>
       <% } %>
     </tbody>
   </table>
